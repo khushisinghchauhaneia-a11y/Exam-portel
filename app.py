@@ -2043,5 +2043,3 @@ if __name__ == '__main__':
             print('Admin account created.')
 
     app.run(debug=True)
-
-    app.run(debug=True)
