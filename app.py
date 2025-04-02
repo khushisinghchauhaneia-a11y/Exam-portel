@@ -1,7 +1,5 @@
 # app.py
 import base64
-import json
-import os
 import random
 import re
 import uuid
@@ -10,7 +8,6 @@ from threading import Timer
 from authlib.integrations.flask_client import OAuth
 import os
 import json
-from flask import session
 import secrets
 import pandas as pd
 import io
