@@ -1741,42 +1741,48 @@ def mouse_leave():
 
 @app.route('/init-db')
 def init_db():
-    # Check if database file already exists
-    db_path = 'instance/exam.db'  # Adjust this path to match your setup
-    if os.path.exists(db_path):
-        # Database exists, just check for required users
-        super_admin = User.query.filter_by(email='chandy1808@hotmail.com').first()
-        admin = User.query.filter_by(email='rajsinghsenger3@gmail.com').first()
-
-        if not super_admin or not admin:
-            if not super_admin:
-                super_admin = User(email='chandy1808@hotmail.com', role='super_admin', is_verified=True)
-                super_admin.set_password('Father@786!')
-                db.session.add(super_admin)
-
-            if not admin:
-                admin = User(email='rajsinghsenger3@gmail.com', role='admin', is_verified=True)
-                admin.set_password('Father@786!')
-                db.session.add(admin)
-
-            db.session.commit()
-            return 'Missing admin accounts have been created.'
-        return 'Database already exists and admin accounts are present.'
-    else:
-        # Create new database
+    try:
         db.create_all()
 
-        # Create admin accounts
-        super_admin = User(email='chandy1808@hotmail.com', role='super_admin', is_verified=True)
-        super_admin.set_password('Father@786!')
-        db.session.add(super_admin)
+        # Check if super admin exists
+        super_admin = User.query.filter_by(email='chandy1808@hotmail.com').first()
+        if not super_admin:
+            super_admin = User(email='chandy1808@hotmail.com', role='super_admin', is_verified=True)
+            super_admin.set_password('Father@786!')
+            db.session.add(super_admin)
+            db.session.commit()
 
-        admin = User(email='rajsinghsenger3@gmail.com', role='admin', is_verified=True)
-        admin.set_password('Father@786!')
-        db.session.add(admin)
+        # Check if admin exists
+        admin = User.query.filter_by(email='rajsinghsenger3@gmail.com').first()
+        if not admin:
+            admin = User(email='rajsinghsenger3@gmail.com', role='admin', is_verified=True)
+            admin.set_password('Father@786!')
+            db.session.add(admin)
+            db.session.commit()
+
+        return 'Database initialized with super admin and admin accounts created.'
+    except Exception as e:
+        return f"Database initialization error: {str(e)}"
+
+
+def ensure_database_exists():
+    with app.app_context():
+        db.create_all()
+        # Create admin accounts only if they don't exist
+        super_admin = User.query.filter_by(email='chandy1808@hotmail.com').first()
+        if not super_admin:
+            super_admin = User(email='chandy1808@hotmail.com', role='super_admin', is_verified=True)
+            super_admin.set_password('Father@786!')
+            db.session.add(super_admin)
+
+        admin = User.query.filter_by(email='rajsinghsenger3@gmail.com').first()
+        if not admin:
+            admin = User(email='rajsinghsenger3@gmail.com', role='admin', is_verified=True)
+            admin.set_password('Father@786!')
+            db.session.add(admin)
 
         db.session.commit()
-        return 'New database initialized with admin accounts.'
+
 # Templates for the graphs and analytics
 @app.route('/super-admin/api/user-stats')
 @login_required
@@ -2035,26 +2041,11 @@ def reset_password(token):
     return render_template('reset_password.html', token=token)
 
 
+# At the bottom of your app.py file, just before app.run
 if __name__ == '__main__':
-    with app.app_context():
-        db_path = 'instance/exam.db'  # Adjust path as needed
-        if not os.path.exists(db_path):
-            db.create_all()
-
-            # Check if admin accounts exist
-            super_admin = User.query.filter_by(email='chandy1808@hotmail.com').first()
-            if not super_admin:
-                super_admin = User(email='chandy1808@hotmail.com', role='super_admin', is_verified=True)
-                super_admin.set_password('Father@786!')
-                db.session.add(super_admin)
-
-            admin = User.query.filter_by(email='rajsinghsenger3@gmail.com').first()
-            if not admin:
-                admin = User(email='rajsinghsenger3@gmail.com', role='admin', is_verified=True)
-                admin.set_password('Father@786!')
-                db.session.add(admin)
-
-            db.session.commit()
-            print('Database and admin accounts created.')
-
+    ensure_database_exists()
     app.run(debug=True)
+else:
+    # This will run when deployed on Render using Gunicorn
+    ensure_database_exists()
+
