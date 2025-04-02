@@ -1,0 +1,554 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Profile - Emerging India Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .profile-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        padding: 30px 25px;
+        text-align: center;
+    }
+
+    .profile-form {
+        padding: 30px 25px;
+    }
+
+    .floating-input {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .floating-input input, .floating-input select, .floating-input .input-group {
+        width: 100%;
+        padding: 0;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        transition: all 0.3s;
+    }
+
+    .floating-input input, .floating-input select {
+        padding: 15px 15px;
+        border: 1px solid #ddd;
+        background-color: #f8f9fa;
+        transition: all 0.3s;
+    }
+
+    .floating-input input:focus, .floating-input select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        background-color: #fff;
+        box-shadow: 0 0 0 3px rgba(166, 34, 60, 0.2);
+    }
+
+    .floating-input label {
+        position: absolute;
+        top: 0;
+        left: 15px;
+        transform: translateY(-50%);
+        background-color: #f8f9fa;
+        padding: 0 5px;
+        font-size: 12px;
+        color: #666;
+        transition: all 0.3s;
+    }
+
+    .floating-input input:focus + label,
+    .floating-input input:not(:placeholder-shown) + label,
+    .floating-input select:focus + label,
+    .floating-input select:not([value=""]):valid + label {
+        color: var(--primary-color);
+    }
+
+    .save-btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border: none;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 10px rgba(166, 34, 60, 0.3);
+        transition: all 0.3s;
+    }
+
+    .save-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(166, 34, 60, 0.4);
+    }
+
+    .save-btn:active {
+        transform: translateY(-1px);
+    }
+
+    /* Animation */
+    .profile-card {
+        animation: slideInUp 0.5s ease-out;
+    }
+
+    @keyframes slideInUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .form-helper-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+        margin-left: 15px;
+    }
+
+    /* Avatar selection styles */
+    .avatar-selection {
+        margin: 20px 0 30px;
+    }
+
+    .avatar-selection-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .avatar-options {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .avatar-option {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        cursor: pointer;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid transparent;
+        transition: all 0.3s;
+    }
+
+    .avatar-option:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .avatar-option.selected {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(166, 34, 60, 0.2);
+    }
+
+    .avatar-option input {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .avatar-svg {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+    }
+
+    .avatar-label {
+        font-size: 12px;
+        text-align: center;
+        margin-top: 5px;
+        color: #666;
+    }
+
+    .avatar-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+     .avatar-option {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        cursor: pointer;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid transparent;
+        transition: all 0.3s;
+    }
+
+    .avatar-option:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Enhanced selection style with glow effect */
+    .avatar-option.selected {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 15px rgba(166, 34, 60, 0.6);
+        transform: translateY(-3px);
+    }
+
+    .avatar-option input {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        z-index: 2;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="profile-container">
+                <div class="profile-card card">
+                    <div class="profile-header">
+                        <h3 class="text-white mb-0">Complete Your Profile</h3>
+                        <p class="text-white-50 mb-0">Please provide your information to continue</p>
+                    </div>
+
+                    <div class="profile-form">
+                        <form method="POST" action="{{ url_for('complete_profile') }}">
+                            <div class="avatar-selection">
+                                <div class="avatar-selection-title">Choose Your Profile Picture</div>
+                                <div class="avatar-options">
+                                    <!-- Male Avatar 1 -->
+                                    <div class="avatar-container">
+                                        <div class="avatar-option">
+                                            <input type="radio" name="avatar" id="avatar-male-1" value="male-1" required {% if current_user.avatar == 'male-1' %}checked{% endif %}>
+                                            <svg class="avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="50" cy="50" r="50" fill="#e6e6e6"/>
+                                                <circle cx="50" cy="42" r="20" fill="#a6223c"/>
+                                                <path d="M25 85 Q50 65 75 85" stroke="#a6223c" stroke-width="2" fill="none"/>
+                                                <circle cx="42" cy="40" r="3" fill="#ffffff"/>
+                                                <circle cx="58" cy="40" r="3" fill="#ffffff"/>
+                                                <path d="M35 60 Q50 70 65 60" stroke="#333333" stroke-width="2" fill="none"/>
+                                                <path d="M20 30 Q30 20 40 28" stroke="#333333" stroke-width="2" fill="none"/>
+                                                <path d="M80 30 Q70 20 60 28" stroke="#333333" stroke-width="2" fill="none"/>
+                                            </svg>
+                                        </div>
+                                        <div class="avatar-label">Male 1</div>
+                                    </div>
+
+                                    <!-- Male Avatar 2 -->
+                                    <div class="avatar-container">
+                                        <div class="avatar-option">
+                                            <input type="radio" name="avatar" id="avatar-male-2" value="male-2" {% if current_user.avatar == 'male-2' %}checked{% endif %}>
+                                            <svg class="avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="50" cy="50" r="50" fill="#e6e6e6"/>
+                                                <rect x="30" y="20" width="40" height="30" rx="15" fill="#85192f"/>
+                                                <circle cx="50" cy="45" r="20" fill="#c3aea2"/>
+                                                <circle cx="42" cy="40" r="3" fill="#333333"/>
+                                                <circle cx="58" cy="40" r="3" fill="#333333"/>
+                                                <rect x="35" y="50" width="30" height="2" rx="1" fill="#333333"/>
+                                                <path d="M25 85 Q50 75 75 85" stroke="#85192f" stroke-width="2" fill="none"/>
+                                            </svg>
+                                        </div>
+                                        <div class="avatar-label">Male 2</div>
+                                    </div>
+
+                                    <!-- Female Avatar 1 -->
+                                    <div class="avatar-container">
+                                        <div class="avatar-option">
+                                            <input type="radio" name="avatar" id="avatar-female-1" value="female-1" {% if current_user.avatar == 'female-1' %}checked{% endif %}>
+                                            <svg class="avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="50" cy="50" r="50" fill="#e6e6e6"/>
+                                                <path d="M25 35 Q50 10 75 35 L75 50 Q50 65 25 50 Z" fill="#c73e58"/>
+                                                <circle cx="50" cy="45" r="20" fill="#f4d5dc"/>
+                                                <circle cx="42" cy="40" r="3" fill="#333333"/>
+                                                <circle cx="58" cy="40" r="3" fill="#333333"/>
+                                                <path d="M42 52 Q50 58 58 52" stroke="#333333" stroke-width="2" fill="none"/>
+                                                <path d="M25 85 Q50 65 75 85" stroke="#c73e58" stroke-width="2" fill="none"/>
+                                            </svg>
+                                        </div>
+                                        <div class="avatar-label">Female 1</div>
+                                    </div>
+
+                                    <!-- Female Avatar 2 -->
+                                    <div class="avatar-container">
+                                        <div class="avatar-option">
+                                            <input type="radio" name="avatar" id="avatar-female-2" value="female-2" {% if current_user.avatar == 'female-2' %}checked{% endif %}>
+                                            <svg class="avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="50" cy="50" r="50" fill="#e6e6e6"/>
+                                                <path d="M20 55 Q50 15 80 55 L75 70 Q50 85 25 70 Z" fill="#a6223c"/>
+                                                <circle cx="50" cy="45" r="18" fill="#ffe0b2"/>
+                                                <circle cx="42" cy="40" r="3" fill="#333333"/>
+                                                <circle cx="58" cy="40" r="3" fill="#333333"/>
+                                                <path d="M40 52 Q50 60 60 52" stroke="#333333" stroke-width="2" fill="none"/>
+                                                <path d="M30 35 L35 30" stroke="#333333" stroke-width="2" fill="none"/>
+                                                <path d="M70 35 L65 30" stroke="#333333" stroke-width="2" fill="none"/>
+                                            </svg>
+                                        </div>
+                                        <div class="avatar-label">Female 2</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="floating-input">
+                                <input type="text" class="form-control" id="name" name="name" value="{{ current_user.name }}" placeholder=" " required>
+                                <label for="name">Full Name</label>
+                            </div>
+
+                            <div class="floating-input">
+                                <select class="form-control" id="stream" name="stream" required>
+                                    <option value="" disabled {% if not current_user.stream %}selected{% endif %}></option>
+                                    <option value="Computer Science" {% if current_user.stream == 'Computer Science' %}selected{% endif %}>Computer Science</option>
+                                    <option value="Information Technology" {% if current_user.stream == 'Information Technology' %}selected{% endif %}>Information Technology</option>
+                                    <option value="Mechanical Engineering" {% if current_user.stream == 'Mechanical Engineering' %}selected{% endif %}>Mechanical Engineering</option>
+                                    <option value="Electrical Engineering" {% if current_user.stream == 'Electrical Engineering' %}selected{% endif %}>Electrical Engineering</option>
+                                    <option value="Civil Engineering" {% if current_user.stream == 'Civil Engineering' %}selected{% endif %}>Civil Engineering</option>
+                                    <option value="Electronics Engineering" {% if current_user.stream == 'Electronics Engineering' %}selected{% endif %}>Electronics Engineering</option>
+                                    <option value="Chemistry" {% if current_user.stream == 'Chemistry' %}selected{% endif %}>Chemistry</option>
+                                    <option value="Physics" {% if current_user.stream == 'Physics' %}selected{% endif %}>Physics</option>
+                                    <option value="Mathematics" {% if current_user.stream == 'Mathematics' %}selected{% endif %}>Mathematics</option>
+                                    <option value="Biology" {% if current_user.stream == 'Biology' %}selected{% endif %}>Biology</option>
+                                    <option value="Commerce" {% if current_user.stream == 'Commerce' %}selected{% endif %}>Commerce</option>
+                                    <option value="Arts" {% if current_user.stream == 'Arts' %}selected{% endif %}>Arts</option>
+                                    <option value="Other" {% if current_user.stream == 'Other' %}selected{% endif %}>Other</option>
+                                </select>
+                                <label for="stream">Stream/Department</label>
+                            </div>
+
+                            <div class="floating-input">
+                                <div class="input-group">
+                                    <select id="country-code" name="country_code" class="form-select" style="max-width: 130px; border-radius: 8px 0 0 8px;">
+                                        <option value="+91" selected>+91 (India)</option>
+                                        <option value="+1">+1 (USA/Canada)</option>
+                                        <option value="+44">+44 (UK)</option>
+                                        <option value="+61">+61 (Australia)</option>
+                                        <option value="+86">+86 (China)</option>
+                                        <option value="+49">+49 (Germany)</option>
+                                        <option value="+33">+33 (France)</option>
+                                        <option value="+65">+65 (Singapore)</option>
+                                        <option value="+971">+971 (UAE)</option>
+                                        <option value="+81">+81 (Japan)</option>
+                                        <option value="+82">+82 (South Korea)</option>
+                                        <option value="+7">+7 (Russia)</option>
+                                    </select>
+                                    <input type="tel" class="form-control" id="contact" name="contact" value="{{ current_user.contact }}" placeholder=" " required pattern="[0-9]{10}" style="border-radius: 0 8px 8px 0;">
+                                </div>
+                                <label for="contact" style="left: 145px;">Contact Number</label>
+                                <div class="form-helper-text">Please enter a 10-digit mobile number without spaces or dashes</div>
+                            </div>
+
+                            <button type="submit" class="btn save-btn text-white w-100 mt-3">
+                                <i class="fas fa-save me-2"></i>Save Profile
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('student_dashboard') }}" class="text-decoration-none">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Avatar selection
+        const avatarOptions = document.querySelectorAll('.avatar-option');
+        const avatarInputs = document.querySelectorAll('.avatar-option input');
+
+        // Initialize selected avatar if there's a previously saved value
+        const savedAvatar = '{{ current_user.avatar }}';
+        if (savedAvatar) {
+            for (let i = 0; i < avatarInputs.length; i++) {
+                if (avatarInputs[i].value === savedAvatar) {
+                    avatarOptions[i].classList.add('selected');
+                    avatarInputs[i].checked = true;
+                    break;
+                }
+            }
+        } else {
+            // Default selection if no saved value
+            avatarOptions[0].classList.add('selected');
+            avatarInputs[0].checked = true;
+        }
+
+        // Handle avatar selection - fixing this part
+        avatarInputs.forEach((input, index) => {
+            input.addEventListener('change', function() {
+                // Remove selected class from all options
+                avatarOptions.forEach(opt => opt.classList.remove('selected'));
+
+                // Add selected class to the parent of the checked input
+                if (this.checked) {
+                    avatarOptions[index].classList.add('selected');
+                }
+            });
+
+            // Also handle clicks on the avatar container itself
+            avatarOptions[index].addEventListener('click', function() {
+                // Remove selected class from all options
+                avatarOptions.forEach(opt => opt.classList.remove('selected'));
+
+                // Add selected class to clicked option
+                this.classList.add('selected');
+
+                // Check the radio input
+                input.checked = true;
+            });
+        });
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Avatar selection
+        const avatarOptions = document.querySelectorAll('.avatar-option');
+        const avatarInputs = document.querySelectorAll('.avatar-option input');
+
+        // Initialize selected avatar if there's a previously saved value
+        const savedAvatar = '{{ current_user.avatar }}';
+        if (savedAvatar) {
+            for (let i = 0; i < avatarInputs.length; i++) {
+                if (avatarInputs[i].value === savedAvatar) {
+                    avatarOptions[i].classList.add('selected');
+                    avatarInputs[i].checked = true;
+                    break;
+                }
+            }
+        } else {
+            // Default selection if no saved value
+            avatarOptions[0].classList.add('selected');
+            avatarInputs[0].checked = true;
+        }
+
+        // Handle avatar selection
+        avatarOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selected class from all options
+                avatarOptions.forEach(opt => opt.classList.remove('selected'));
+
+                // Add selected class to clicked option
+                this.classList.add('selected');
+
+                // Check the radio input
+                const input = this.querySelector('input');
+                input.checked = true;
+            });
+        });
+
+        // Focus name field on page load if empty
+        if (!document.getElementById('name').value) {
+            document.getElementById('name').focus();
+        }
+
+        // Set existing country code if it exists
+        const contactInput = document.getElementById('contact');
+        const countryCodeSelect = document.getElementById('country-code');
+
+        if (contactInput.value && contactInput.value.startsWith('+')) {
+            const parts = contactInput.value.match(/^(\+\d+)(.*)$/);
+            if (parts && parts.length >= 3) {
+                // Try to find the country code in our options
+                const countryCodeOptions = countryCodeSelect.options;
+                for (let i = 0; i < countryCodeOptions.length; i++) {
+                    if (countryCodeOptions[i].value === parts[1]) {
+                        countryCodeSelect.selectedIndex = i;
+                        contactInput.value = parts[2].trim();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Simple form validation
+        const form = document.querySelector('form');
+        const nameInput = document.getElementById('name');
+        const streamSelect = document.getElementById('stream');
+        const avatarInputs = document.querySelectorAll('input[name="avatar"]');
+
+        // Check if at least one avatar is selected
+        function validateAvatarSelection() {
+            let isAvatarSelected = false;
+            avatarInputs.forEach(input => {
+                if (input.checked) {
+                    isAvatarSelected = true;
+                }
+            });
+            return isAvatarSelected;
+        }
+
+        // Format phone with country code when form is submitted
+        function formatPhoneWithCountryCode() {
+            const countryCode = countryCodeSelect.value;
+            const phoneNumber = contactInput.value.trim().replace(/[- ]/g, '');
+
+            // Store the complete phone number with country code
+            const hiddenPhoneInput = document.createElement('input');
+            hiddenPhoneInput.type = 'hidden';
+            hiddenPhoneInput.name = 'full_contact';
+            hiddenPhoneInput.value = countryCode + phoneNumber;
+            form.appendChild(hiddenPhoneInput);
+        }
+
+        form.addEventListener('submit', function(e) {
+            let valid = true;
+
+            // Reset validation
+            nameInput.classList.remove('is-invalid');
+            streamSelect.classList.remove('is-invalid');
+            contactInput.classList.remove('is-invalid');
+            document.querySelector('.avatar-selection-title').classList.remove('text-danger');
+
+            // Avatar validation
+            if (!validateAvatarSelection()) {
+                document.querySelector('.avatar-selection-title').classList.add('text-danger');
+                valid = false;
+            }
+
+            // Name validation
+            if (!nameInput.value.trim()) {
+                nameInput.classList.add('is-invalid');
+                valid = false;
+            }
+
+            // Stream validation
+            if (!streamSelect.value) {
+                streamSelect.classList.add('is-invalid');
+                valid = false;
+            }
+
+            // Contact validation
+            const phoneRegex = /^\d{10}$/;
+            if (!contactInput.value.trim() || !phoneRegex.test(contactInput.value.replace(/[- ]/g, ''))) {
+                contactInput.classList.add('is-invalid');
+                valid = false;
+            }
+
+            if (!valid) {
+                e.preventDefault();
+            } else {
+                formatPhoneWithCountryCode();
+            }
+        });
+    });
+</script>
+{% endblock %}

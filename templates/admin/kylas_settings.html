@@ -1,0 +1,91 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Kylas API Settings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Kylas CRM API Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enabled" name="enabled" {% if kylas_enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="enabled">Enable Kylas CRM Integration</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="api_url" class="form-label">API URL</label>
+                            <input type="text" class="form-control" id="api_url" name="api_url" value="{{ kylas_api_url }}" required>
+                            <div class="form-text">The base URL for the Kylas API</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="api_key" class="form-label">API Key</label>
+                            <input type="text" class="form-control" id="api_key" name="api_key" value="{{ kylas_api_key }}" required>
+                            <div class="form-text">Your Kylas API Bearer token</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="owner_id" class="form-label">Owner ID</label>
+                            <input type="number" class="form-control" id="owner_id" name="owner_id" value="{{ kylas_owner_id }}" required>
+                            <div class="form-text">The Kylas user ID to assign leads to</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Custom Field Mapping</label>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Exam Data</th>
+                                            <th>Kylas Field</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Student Name</td>
+                                            <td>First Name + Last Name</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Student Email</td>
+                                            <td>Email (Office)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Student Contact</td>
+                                            <td>Phone (Mobile)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Student Stream</td>
+                                            <td>Custom Field: cfStream</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Exam Score</td>
+                                            <td>Custom Field: cfStudentScore</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="form-text">
+                                Note: Make sure these custom fields exist in your Kylas CRM system.
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                            <button type="submit" name="test_connection" value="1" class="btn btn-outline-primary">
+                                <i class="bi bi-plug"></i> Test Connection
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

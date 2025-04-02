@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Emerging India Analytics - Online Examination Platform{% endblock %}
+
+{% block content %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check user authentication and role on page load
+    {% if current_user.is_authenticated %}
+        {% if current_user.role == 'super_admin' %}
+            window.location.href = "{{ url_for('super_admin_dashboard') }}";
+        {% endif %}
+    {% endif %}
+});
+</script>
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <!-- Hero Section -->
+        <section class="text-center mb-5 animated-element">
+            <div class="gradient-section py-5">
+                <h1 class="display-4 fw-bold">Welcome to Emerging India Analytics</h1>
+                <p class="lead">An advanced online examination platform with anti-cheating features</p>
+                <div class="mt-4">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.role == 'super_admin' %}
+                            <a href="{{ url_for('super_admin_dashboard') }}" class="btn btn-light btn-lg me-2">Go to Super Admin Dashboard</a>
+                        {% elif current_user.role == 'admin' %}
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-light btn-lg me-2">Go to Dashboard</a>
+                            <a href="{{ url_for('create_exam') }}" class="btn btn-outline-light btn-lg">Create Exam</a>
+                        {% else %}
+                            <a href="{{ url_for('student_dashboard') }}" class="btn btn-light btn-lg">Go to Dashboard</a>
+                        {% endif %}
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-light btn-lg me-2">Login</a>
+                        <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="my-5 content-section">
+            <h2 class="text-center mb-4" style="color: var(--primary-color);">Our Features</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-lock fa-3x mb-3" style="color: var(--primary-color);"></i>
+                            <h4 class="card-title">Secure Testing</h4>
+                            <p class="card-text">Our platform provides a secure environment for conducting online examinations with anti-cheating features.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-pie fa-3x mb-3" style="color: var(--primary-color);"></i>
+                            <h4 class="card-title">Detailed Analytics</h4>
+                            <p class="card-text">Get comprehensive analytics and reports on student performance and exam statistics.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-user-shield fa-3x mb-3" style="color: var(--primary-color);"></i>
+                            <h4 class="card-title">Proctoring System</h4>
+                            <p class="card-text">Advanced proctoring features including tab switching detection, full-screen monitoring, and more.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section class="my-5 content-section">
+            <h2 class="text-center mb-4" style="color: var(--primary-color);">How It Works</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="mb-0">For Administrators</h4>
+                        </div>
+                        <div class="card-body">
+                            <ol class="list-group list-group-numbered">
+                                <li class="list-group-item border-0">Register as an administrator</li>
+                                <li class="list-group-item border-0">Manage users and roles</li>
+                                <li class="list-group-item border-0">Create and manage exams</li>
+                                <li class="list-group-item border-0">Generate comprehensive reports</li>
+                                <li class="list-group-item border-0">Monitor platform activities</li>
+                                <li class="list-group-item border-0">Ensure platform security</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="mb-0">For Students</h4>
+                        </div>
+                        <div class="card-body">
+                            <ol class="list-group list-group-numbered">
+                                <li class="list-group-item border-0">Register and verify your email</li>
+                                <li class="list-group-item border-0">Complete your profile with necessary details</li>
+                                <li class="list-group-item border-0">View available exams on your dashboard</li>
+                                <li class="list-group-item border-0">Take exams in a secure environment</li>
+                                <li class="list-group-item border-0">Submit your answers before the time limit</li>
+                                <li class="list-group-item border-0">View your results when published</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials Section -->
+        <section class="my-5 content-section">
+            <div class="gradient-section py-4">
+                <h2 class="text-center mb-4">What Our Users Say</h2>
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                <div class="carousel-item active">
+                                    <div class="text-center px-4">
+                                        <i class="fas fa-quote-left fa-2x mb-3"></i>
+                                        <p class="lead">"This platform has revolutionized how we conduct examinations. The anti-cheating features provide peace of mind, and the analytics help us improve our teaching methods."</p>
+                                        <p class="fw-bold">- Dr. Rajesh Kumar, Delhi University</p>
+                                    </div>
+                                </div>
+                                <div class="carousel-item">
+                                    <div class="text-center px-4">
+                                        <i class="fas fa-quote-left fa-2x mb-3"></i>
+                                        <p class="lead">"Taking exams on this platform is a smooth experience. The interface is user-friendly, and I can focus on answering the questions without any technical distractions."</p>
+                                        <p class="fw-bold">- Priya Sharma, Engineering Student</p>
+                                    </div>
+                                </div>
+                                <div class="carousel-item">
+                                    <div class="text-center px-4">
+                                        <i class="fas fa-quote-left fa-2x mb-3"></i>
+                                        <p class="lead">"The detailed analytics have helped our institution identify areas where students need additional support. It's more than just an exam platform; it's a teaching tool."</p>
+                                        <p class="fw-bold">- Amit Patel, College Principal</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <section class="text-center my-5 animated-element">
+            <h2 style="color: var(--primary-color);">Ready to Get Started?</h2>
+            <p class="lead">Join thousands of institutions and students using our platform</p>
+            <div class="mt-4">
+                {% if not current_user.is_authenticated %}
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-2">Register Now</a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">Login</a>
+                {% else %}
+                    {% if current_user.role == 'super_admin' %}
+                        <a href="{{ url_for('super_admin_dashboard') }}" class="btn btn-primary btn-lg">Super Admin Dashboard</a>
+                    {% elif current_user.role == 'admin' %}
+                        <a href="{{ url_for('create_exam') }}" class="btn btn-primary btn-lg">Create Your First Exam</a>
+                    {% else %}
+                        <a href="{{ url_for('student_dashboard') }}" class="btn btn-primary btn-lg">View Available Exams</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animation on scroll
+    window.addEventListener('scroll', function() {
+        const elements = document.querySelectorAll('.content-section');
+        elements.forEach(element => {
+            const elementPosition = element.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+            if (elementPosition < windowHeight - 100) {
+                element.classList.add('animated-element');
+            }
+        });
+    });
+</script>
+{% endblock %}

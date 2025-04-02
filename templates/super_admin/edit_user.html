@@ -1,0 +1,476 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit User - Emerging India Analytics{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+<style>
+    :root {
+        --primary-color: #a6223c;
+        --primary-dark: #85192f;
+    }
+
+    .sidebar {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar .list-group-item {
+        border: none;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar .list-group-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+    }
+
+    .sidebar .list-group-item.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .user-avatar {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto 20px;
+    }
+
+    .avatar-svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .avatar-selection {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .avatar-selection .avatar-option {
+        width: 80px;
+        height: 80px;
+        cursor: pointer;
+        border: 3px solid transparent;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .avatar-selection .avatar-option:hover,
+    .avatar-selection .avatar-option.selected {
+        border-color: var(--primary-color);
+        transform: scale(1.1);
+    }
+
+    .password-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Super Admin nav items to the navbar
+    const navbarNav = document.querySelector('#navbarNav .navbar-nav');
+
+    // Check if navbar exists and user is authenticated
+    if (navbarNav) {
+        // Clear existing nav items
+        navbarNav.innerHTML = `
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/super-admin/dashboard' %}active{% endif %}" href="{{ url_for('super_admin_dashboard') }}">Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/super-admin/users' %}active{% endif %}" href="{{ url_for('manage_users') }}">Manage Users</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#reportsModal">Reports</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+            </li>
+        `;
+    }
+
+    // Avatar selection handling
+    const avatarOptions = document.querySelectorAll('.avatar-option');
+    const avatarInput = document.getElementById('avatar');
+    
+    avatarOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Remove selected class from all options
+            avatarOptions.forEach(opt => opt.classList.remove('selected'));
+            
+            // Add selected class to clicked option
+            this.classList.add('selected');
+            
+            // Set input value
+            avatarInput.value = this.dataset.avatar;
+            
+            // Update preview
+            const previewAvatar = document.getElementById('previewAvatar');
+            previewAvatar.innerHTML = this.innerHTML;
+        });
+    });
+
+    // Validate form submission
+    const editUserForm = document.getElementById('editUserForm');
+    editUserForm.addEventListener('submit', function(event) {
+        // Validate email
+        const emailInput = document.getElementById('email');
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        
+        if (!emailPattern.test(emailInput.value)) {
+            event.preventDefault();
+            alert('Please enter a valid email address.');
+            return;
+        }
+
+        // Optional: Password validation
+        const passwordInput = document.getElementById('new_password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+        
+        if (passwordInput.value !== confirmPasswordInput.value) {
+            event.preventDefault();
+            alert('Passwords do not match.');
+            return;
+        }
+
+        // Optional: Enforce password complexity if password is being changed
+        if (passwordInput.value) {
+            const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (!passwordPattern.test(passwordInput.value)) {
+                event.preventDefault();
+                alert('Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.');
+                return;
+            }
+        }
+    });
+});
+</script>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <div class="user-avatar">
+                        <div id="previewAvatar">
+                            {% if user.avatar %}
+                                {{ avatar_svg(user.avatar)|safe }}
+                            {% else %}
+                                <i class="bi bi-person-circle" style="font-size: 4rem; color: var(--primary-color);"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <h5 class="card-title">{{ user.email }}</h5>
+                    <p class="card-text">
+                        {% if user.role == 'super_admin' %}
+                        <span class="badge bg-danger">Super Administrator</span>
+                        {% elif user.role == 'admin' %}
+                        <span class="badge bg-primary">Administrator</span>
+                        {% else %}
+                        <span class="badge bg-success">Student</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="sidebar mb-4">
+                <div class="list-group shadow-sm">
+                    <a href="{{ url_for('super_admin_dashboard') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('manage_users') }}" class="list-group-item list-group-item-action active">
+                        <i class="bi bi-people-fill me-2"></i> Manage Users
+                    </a>
+                    <a href="#reportsModal" data-bs-toggle="modal" class="list-group-item list-group-item-action">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i> Generate Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header shadow-sm mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Edit User</h2>
+                        <p class="mb-0">Modify user details and settings</p>
+                    </div>
+                    <a href="{{ url_for('manage_users') }}" class="btn btn-light">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Users
+                    </a>
+                </div>
+            </div>
+
+            <!-- Edit User Form -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form id="editUserForm" method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="name" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ user.name or '' }}" placeholder="Enter full name">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="email" class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="role" class="form-label">User Role *</label>
+                                <select class="form-select" id="role" name="role" required>
+                                    <option value="student" {% if user.role == 'student' %}selected{% endif %}>Student</option>
+                                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Administrator</option>
+                                    <option value="super_admin" {% if user.role == 'super_admin' %}selected{% endif %}>Super Administrator</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="stream" class="form-label">Stream</label>
+                                <select class="form-select" id="stream" name="stream">
+                                    <option value="">Select Stream (Optional)</option>
+                                    <!-- Populate with available streams -->
+                                    {% set streams = ['Computer Science', 'Engineering', 'Commerce', 'Arts', 'Science'] %}
+                                    {% for stream_option in streams %}
+                                    <option value="{{ stream_option }}" {% if user.stream == stream_option %}selected{% endif %}>
+                                        {{ stream_option }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="contact" class="form-label">Contact Number</label>
+                                <input type="tel" class="form-control" id="contact" name="contact" value="{{ user.contact or '' }}" placeholder="Enter contact number">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="form-label">Verification Status</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified" 
+                                           {% if user.is_verified %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_verified">
+                                        Account Verified
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Avatar Selection -->
+                        <div class="form-group mt-3">
+                            <label class="form-label">Select Avatar</label>
+                            <input type="hidden" id="avatar" name="avatar" value="{{ user.avatar or 'male-1' }}">
+                            <div class="avatar-selection">
+                                {% set avatars = ['male-1', 'male-2', 'female-1', 'female-2'] %}
+                                {% for avatar in avatars %}
+                                <div class="avatar-option {% if user.avatar == avatar %}selected{% endif %}" 
+                                     data-avatar="{{ avatar }}">
+                                    {{ avatar_svg(avatar)|safe }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Password Reset Section -->
+                        <div class="password-section mt-4">
+                            <h5 class="mb-3"><i class="bi bi-shield-lock me-2"></i>Change Password (Optional)</h5>
+                            <div class="row">
+                                <div class="col-md-6 form-group">
+                                    <label for="new_password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password" 
+                                           placeholder="Leave blank if no change">
+                                    <small class="form-text text-muted">
+                                        At least 8 characters. Include uppercase, lowercase, number, and special character.
+                                    </small>
+                                </div>
+                                <div class="col-md-6 form-group">
+                                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                           placeholder="Confirm new password">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ url_for('manage_users') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reports Modal -->
+<div class="modal fade" id="reportsModal" tabindex="-1" aria-labelledby="reportsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="reportsModalLabel"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Generate Reports</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('generate_report') }}" method="post">
+                    <!-- Same report generation form as in manage_users.html -->
+                    <div class="mb-3">
+                        <label for="report_type" class="form-label">Report Type</label>
+                        <select class="form-select" id="report_type" name="report_type" required>
+                            <option value="" selected disabled>Select a report type</option>
+                            <option value="users">User Management Report</option>
+                            <option value="exams">Exam Report</option>
+                            <option value="students">Student Performance Report</option>
+                            <option value="proctoring">Proctoring Events Report</option>
+</select>
+                    </div>
+
+                    <!-- Dynamic fields based on report type -->
+                    <div id="exam-fields" class="d-none">
+                        <div class="mb-3">
+                            <label for="exam_id" class="form-label">Select Exam (optional)</label>
+                            <select class="form-select" id="exam_id" name="exam_id">
+                                <option value="">All Exams</option>
+                                {% for exam in exams %}
+                                <option value="{{ exam.id }}">{{ exam.title }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Leave blank to generate a report for all exams</div>
+                        </div>
+                    </div>
+
+                    <div id="student-fields" class="d-none">
+                        <div class="mb-3">
+                            <label for="student_search" class="form-label">Student Search (optional)</label>
+                            <input type="text" class="form-control" id="student_search" name="student_search" placeholder="Name or email">
+                        </div>
+                        <div class="mb-3">
+                            <label for="stream" class="form-label">Stream (optional)</label>
+                            <select class="form-select" id="stream" name="stream">
+                                <option value="">All Streams</option>
+                                {% for stream, count in stream_data.items() %}
+                                <option value="{{ stream }}">{{ stream }} ({{ count }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="user-fields" class="d-none">
+                        <div class="mb-3">
+                            <label for="role_filter" class="form-label">User Role</label>
+                            <select class="form-select" id="role_filter" name="role_filter">
+                                <option value="all">All Roles</option>
+                                <option value="student">Students</option>
+                                <option value="admin">Admins</option>
+                                <option value="super_admin">Super Admins</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="proctoring-fields" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label">Event Types</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="event_types" value="tab_switch" id="tab_switch" checked>
+                                <label class="form-check-label" for="tab_switch">Tab Switches</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="event_types" value="fullscreen_exit" id="fullscreen_exit" checked>
+                                <label class="form-check-label" for="fullscreen_exit">Fullscreen Exits</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="event_types" value="copy_attempt" id="copy_attempt" checked>
+                                <label class="form-check-label" for="copy_attempt">Copy Attempts</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="event_types" value="paste_attempt" id="paste_attempt" checked>
+                                <label class="form-check-label" for="paste_attempt">Paste Attempts</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="event_types" value="mouse_leave" id="mouse_leave" checked>
+                                <label class="form-check-label" for="mouse_leave">Mouse Leave Events</label>
+                            </div>
+                            <div class="form-check">
+                               <input class="form-check-input" type="checkbox" name="event_types" value="periodic_screenshot" id="periodic_screenshot" checked>
+                                <label class="form-check-label" for="periodic_screenshot">Periodic Screenshots</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="report_format" class="form-label">Report Format</label>
+                        <select class="form-select" id="report_format" name="report_format">
+                            <option value="excel" selected>Excel (.xlsx)</option>
+                            <option value="csv">CSV</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger">Generate Report</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide dynamic form fields based on selected report type
+    const reportTypeSelect = document.getElementById('report_type');
+    if (reportTypeSelect) {
+        reportTypeSelect.addEventListener('change', function() {
+            // Hide all conditional fields first
+            document.getElementById('exam-fields').classList.add('d-none');
+            document.getElementById('student-fields').classList.add('d-none');
+            document.getElementById('user-fields').classList.add('d-none');
+            document.getElementById('proctoring-fields').classList.add('d-none');
+
+            // Show relevant fields based on selection
+            const selectedType = this.value;
+            if (selectedType === 'exams') {
+                document.getElementById('exam-fields').classList.remove('d-none');
+            } else if (selectedType === 'students') {
+                document.getElementById('exam-fields').classList.remove('d-none');
+                document.getElementById('student-fields').classList.remove('d-none');
+            } else if (selectedType === 'users') {
+                document.getElementById('user-fields').classList.remove('d-none');
+            } else if (selectedType === 'proctoring') {
+                document.getElementById('exam-fields').classList.remove('d-none');
+                document.getElementById('proctoring-fields').classList.remove('d-none');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

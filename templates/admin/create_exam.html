@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}Create Exam - Emerging India Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Main styling to match the portal theme */
+:root {
+    --primary-color: #A6223C;
+    --primary-dark: #85192F;
+    --secondary-color: #6c757d;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Sidebar styling */
+.sidebar {
+    min-height: calc(100vh - 56px);
+    background-color: #f8f9fa;
+    padding-top: 20px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar .nav-link {
+    color: #333;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    margin-right: 15px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.sidebar .nav-link.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    box-shadow: 0 4px 8px rgba(166, 34, 60, 0.2);
+}
+
+.sidebar .nav-link:hover:not(.active) {
+    background-color: #e9ecef;
+    transform: translateX(3px);
+}
+
+/* Main content styling */
+.main-content {
+    padding: 20px;
+}
+
+/* Form container styling */
+.form-container {
+    max-width: 700px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.form-container:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* Gradient section matching the login page */
+.gradient-section {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 15px rgba(166, 34, 60, 0.2);
+}
+
+/* Animation for elements */
+.animated-element {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+/* Card styling */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Button styling */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(166, 34, 60, 0.3);
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(166, 34, 60, 0.4);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(166, 34, 60, 0.2);
+}
+
+/* Navbar styling */
+.navbar-dark.bg-primary {
+    background: linear-gradient(to right, var(--primary-dark), var(--primary-color)) !important;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Form controls to match login page */
+.form-control {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    transition: all 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(166, 34, 60, 0.2);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+            <div class="position-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-speedometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('create_exam') }}">
+                            <i class="fas fa-plus-circle"></i> Create Exam
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-tasks"></i> Manage Exams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-chart-bar"></i> View Results
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Create New Exam</h1>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Introduction Section -->
+            <div class="gradient-section animated-element">
+                <h2 class="text-center fw-bold">Design Your Exam</h2>
+                <p class="lead text-center text-white-50">Create a new exam with custom settings, questions, and options</p>
+            </div>
+
+            <div class="form-container mt-4 animated-element">
+                <form method="POST" action="{{ url_for('create_exam') }}">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Exam Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        <div class="form-text">Provide instructions or details about the exam.</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="duration" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="duration" name="duration" min="5" required value="60">
+                            <div class="form-text">Set the total time allowed for the exam.</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="passingScore" class="form-label">Passing Score (%)</label>
+                            <input type="number" class="form-control" id="passingScore" name="passingScore" min="1" max="100" value="60">
+                            <div class="form-text">Set the minimum passing percentage.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="examDate" class="form-label">Exam Date</label>
+                        <input type="date" class="form-control" id="examDate" name="examDate">
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="randomizeQuestions" name="randomizeQuestions">
+                            <label class="form-check-label" for="randomizeQuestions">
+                                Randomize Questions Order
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="enableProctoring" name="enableProctoring" checked>
+                            <label class="form-check-label" for="enableProctoring">
+                                Enable Proctoring Features
+                            </label>
+                            <div class="form-text">Tab switching detection, full screen monitoring, etc.</div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-info-circle"></i> Next Steps</h5>
+                            <p class="card-text">After creating the exam, you'll be redirected to add questions of various types:</p>
+                            <ul>
+                                <li>Multiple Choice Questions</li>
+                                <li>True/False Questions</li>
+                                <li>Short Answer Questions</li>
+                                <li>Essay Questions</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg text-white">
+                            <i class="fas fa-plus-circle me-2"></i>Create Exam
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animation for elements on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Add animation class to elements with delay
+    const animatedElements = document.querySelectorAll('.form-container, .gradient-section');
+    animatedElements.forEach((element, index) => {
+        setTimeout(() => {
+            element.classList.add('animated-element');
+        }, index * 200); // Stagger the animations
+    });
+
+    // Form validation enhancement
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            const titleInput = document.getElementById('title');
+            const durationInput = document.getElementById('duration');
+
+            if (!titleInput.value.trim()) {
+                event.preventDefault();
+                showAlert('Please enter an exam title', 'danger');
+                titleInput.focus();
+            } else if (parseInt(durationInput.value) < 5) {
+                event.preventDefault();
+                showAlert('Duration must be at least 5 minutes', 'danger');
+                durationInput.focus();
+            }
+        });
+    }
+
+    // Set minimum date for exam date to today
+    const examDateInput = document.getElementById('examDate');
+    if (examDateInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const todayString = `${yyyy}-${mm}-${dd}`;
+        examDateInput.setAttribute('min', todayString);
+    }
+
+    // Animation on scroll (similar to index page)
+    window.addEventListener('scroll', function() {
+        const elements = document.querySelectorAll('.card, .form-container');
+        elements.forEach(element => {
+            const elementPosition = element.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+            if (elementPosition < windowHeight - 100) {
+                element.classList.add('animated-element');
+            }
+        });
+    });
+});
+
+// Function to show alert messages
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.role = 'alert';
+
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+
+    // Insert at the top of the main content
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.insertBefore(alertDiv, mainContent.firstChild);
+
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            setTimeout(() => alertDiv.remove(), 300);
+        }, 5000);
+    }
+}
+
+// Toggle sidebar on mobile
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebarToggle = document.querySelector('[data-bs-toggle="collapse"]');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('show');
+        });
+    }
+});
+</script>
+{% endblock %}

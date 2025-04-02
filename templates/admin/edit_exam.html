@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Exam - Emerging India Analytics{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+<style>
+    :root {
+        --primary-color: #A6223C;
+        --primary-dark: #85192F;
+        --secondary-color: #6c757d;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f6f9;
+    }
+
+    .sidebar {
+        min-height: calc(100vh - 56px);
+        background-color: #f8f9fa;
+        border-right: 1px solid #e0e4e8;
+        padding-top: 20px;
+    }
+
+    .sidebar .nav-link {
+        color: #333;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar .nav-link.active {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        box-shadow: 0 4px 8px rgba(166, 34, 60, 0.2);
+    }
+
+    .main-content {
+        padding: 20px;
+    }
+
+    .form-container {
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+    }
+
+    .gradient-section {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border: none;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(166, 34, 60, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('create_exam') }}">
+                        <i class="fas fa-plus-circle me-2"></i>Create Exam
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('edit_exam', exam_id=exam.id) }}">
+                        <i class="fas fa-edit me-2"></i>Edit Exam
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">Edit Exam</h1>
+                <div>
+                    <a href="{{ url_for('manage_questions', exam_id=exam.id) }}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-list-check me-2"></i>Manage Questions
+                    </a>
+                    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="gradient-section">
+                <h2 class="text-center fw-bold">{{ exam.title }}</h2>
+                <p class="lead text-center text-white-50">Modify exam settings and manage questions</p>
+            </div>
+
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('edit_exam', exam_id=exam.id) }}">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Exam Title</label>
+                        <input type="text" class="form-control" id="title" name="title"
+                               value="{{ exam.title }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description"
+                                  rows="3">{{ exam.description }}</textarea>
+                        <small class="form-text text-muted">Provide instructions or details about the exam.</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="duration" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="duration"
+                                   name="duration" min="5" value="{{ exam.duration }}" required>
+                            <small class="form-text text-muted">Set the total time allowed for the exam.</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="passingScore" class="form-label">Passing Score (%)</label>
+                            <input type="number" class="form-control" id="passingScore"
+                                   name="passingScore" min="1" max="100"
+                                   value="{{ exam.passing_score|default(60, true) }}">
+                            <small class="form-text text-muted">Set the minimum passing percentage.</small>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 bg-light">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h5 class="mb-3">Exam Status</h5>
+                                    <p class="mb-2">
+                                        <strong>Current Status:</strong>
+                                        {% if exam.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </p>
+                                    <p class="mb-0">
+                                        <strong>Questions:</strong>
+                                        {% if exam.questions | length > 0 %}
+                                            <span class="badge bg-primary">{{ exam.questions | length }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">No questions added</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                    <a href="{{ url_for('manage_questions', exam_id=exam.id) }}" class="btn btn-success">
+                        <i class="fas fa-list-check me-2"></i>Manage Questions
+                    </a>
+
+                    {% if exam.is_active %}
+                        <form method="POST" action="{{ url_for('end_exam', exam_id=exam.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-stop-circle me-2"></i>End Exam
+                            </button>
+                        </form>
+                    {% else %}
+                        {% if exam.questions | length > 0 %}
+                            <form method="POST" action="{{ url_for('start_exam', exam_id=exam.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-play-circle me-2"></i>Start Exam
+                                </button>
+                            </form>
+                        {% else %}
+                            <button class="btn btn-secondary" disabled>
+                                <i class="fas fa-exclamation-circle me-2"></i>Add Questions First
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Optional: Add any client-side interactivity scripts here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Example: Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            const title = document.getElementById('title');
+            const duration = document.getElementById('duration');
+            const passingScore = document.getElementById('passingScore');
+
+            if (!title.value.trim()) {
+                event.preventDefault();
+                alert('Please enter an exam title.');
+                return;
+            }
+
+            if (parseInt(duration.value) < 5) {
+                event.preventDefault();
+                alert('Exam duration must be at least 5 minutes.');
+                return;
+            }
+
+            if (parseInt(passingScore.value) < 1 || parseInt(passingScore.value) > 100) {
+                event.preventDefault();
+                alert('Passing score must be between 1 and 100.');
+                return;
+            }
+        });
+    });
+</script>
+{% endblock %}

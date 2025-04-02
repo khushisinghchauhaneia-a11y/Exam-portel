@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Exam - Emerging India Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Include the CSS file -->
+    <style>
+:root {
+    --primary-color: #A6223C;
+    --primary-dark: #8A1C32;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --warning-color: #ffc107;
+    --text-color: #333;
+    --bg-light: #f8f9fa;
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.1);
+    --border-radius: 15px;
+    --option-radius: 8px;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    color: var(--text-color);
+    overflow-x: hidden;
+}
+
+/* Navbar styles */
+.navbar {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 12px 0;
+    position: relative;
+    z-index: 1100;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Exam layout styles */
+.exam-layout {
+    display: flex;
+    margin-top: 20px;
+    position: relative;
+    min-height: calc(100vh - 80px);
+}
+
+/* Sidebar styles */
+.question-sidebar {
+    width: 280px;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    padding: 20px 0;
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    bottom: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.sidebar-header {
+    padding: 0 20px 15px;
+    border-bottom: 1px solid #eaeaea;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-title {
+    font-size: 1.4rem;
+    margin: 0;
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.progress-info {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.question-list {
+    display: flex;
+    flex-direction: column;
+    padding: 0 15px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.question-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    margin-bottom: 8px;
+    border: 1px solid #eaeaea;
+    border-radius: 8px;
+    background-color: white;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.question-btn:hover {
+    background-color: #f9f9f9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.question-btn.current {
+    border: 2px solid var(--primary-color);
+    background-color: rgba(166, 34, 60, 0.05);
+    font-weight: 600;
+}
+
+.question-btn.answered {
+    border-left: 4px solid var(--success-color);
+}
+
+.question-btn.answered .question-status i {
+    color: var(--success-color);
+}
+
+.question-number {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.question-status i {
+    font-size: 1.1rem;
+    color: #ccc;
+}
+
+.exam-info {
+    padding: 15px 20px;
+    border-top: 1px solid #eaeaea;
+    margin-top: auto;
+    background-color: #f9f9f9;
+}
+
+.info-item {
+    padding: 8px 0;
+    color: var(--secondary-color);
+    font-size: 0.95rem;
+}
+
+/* Question content styles */
+.question-content {
+    flex: 1;
+    margin-left: 300px;
+    margin-right: 20px;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 80px);
+}
+
+.exam-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #eaeaea;
+    background-color: white;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    z-index: 999;
+}
+
+.exam-title {
+    font-size: 1.6rem;
+    margin-bottom: 0;
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.exam-body {
+    padding: 25px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Question container styles */
+.question-container {
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.question-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+/* Options styles */
+.options-container {
+    margin-top: 25px;
+}
+
+.option-container {
+    margin-bottom: 15px;
+}
+
+.form-check {
+    padding: 15px 30px 15px 50px;
+    border: 1px solid #eaeaea;
+    border-radius: var(--option-radius);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.form-check:hover {
+    background-color: #f8f9fa;
+    border-color: #d1d1d1;
+}
+
+.form-check-input {
+    margin-top: 3px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.form-check-input:checked + .form-check-label {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.form-check.selected {
+    background-color: rgba(166, 34, 60, 0.05);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.form-check-label {
+    font-size: 1.05rem;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+/* Question image styles */
+.question-image {
+    max-width: 100%;
+    max-height: 300px;
+    margin: 15px 0;
+    border-radius: var(--option-radius);
+    box-shadow: var(--shadow-sm);
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Timer styles */
+.timer-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1050;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    color: white;
+    padding: 12px 18px;
+    border-radius: var(--option-radius);
+    font-size: 1.2rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    animation: pulse 2s infinite;
+}
+
+.timer-container i {
+    margin-right: 8px;
+    font-size: 1.3rem;
+}
+
+.timer-container.low-time {
+    background: linear-gradient(135deg, #d94642, #dc3545);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(166, 34, 60, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(166, 34, 60, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(166, 34, 60, 0);
+    }
+}
+
+/* Navigation buttons */
+.question-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    padding: 15px 0;
+    border-top: 1px solid #eaeaea;
+}
+
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding: 20px 25px;
+    border-top: 1px solid #eaeaea;
+    background-color: #f9f9f9;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(166, 34, 60, 0.3);
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(166, 34, 60, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(108, 117, 125, 0.3);
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-outline-secondary {
+    color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--secondary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Badge styles */
+.badge {
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.badge.bg-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+}
+
+.badge.bg-secondary {
+    background: linear-gradient(135deg, #6c757d, #495057) !important;
+}
+
+.badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+}
+
+/* Alert styles */
+.alert {
+    border-radius: var(--border-radius);
+    border: none;
+    box-shadow: var(--shadow-sm);
+    animation: slideInDown 0.5s ease-out;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+}
+
+/* Warning modal for tab switching */
+.modal-warning {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(220, 53, 69, 0.95);
+    color: white;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    text-align: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-warning h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.modal-warning p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    max-width: 600px;
+}
+.modal-warning .btn {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    margin-top: 10px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+    .question-sidebar {
+        width: 240px;
+    }
+
+    .question-content {
+        margin-left: 260px;
+    }
+
+    .form-check {
+        padding: 12px 20px 12px 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .exam-layout {
+        flex-direction: column;
+    }
+
+    .question-sidebar {
+        position: relative;
+        top: 0;
+        left: 0;
+        width: 100%;
+        margin: 0 0 20px 0;
+        padding: 15px;
+        max-height: 300px;
+    }
+
+    .question-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .question-btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .question-btn .question-status {
+        display: none;
+    }
+
+    .question-content {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .timer-container {
+        right: 10px;
+        top: 70px;
+        padding: 8px 12px;
+        font-size: 1rem;
+    }
+
+    .timer-container i {
+        font-size: 1.1rem;
+    }
+
+    .exam-title {
+        font-size: 1.3rem;
+    }
+
+    .form-check {
+        padding: 10px 15px 10px 35px;
+    }
+}
+        </style>
+
+<!-- Prevent right-click -->
+<script>
+    document.addEventListener('contextmenu', event => event.preventDefault());
+</script>
+</head>
+<body>
+<!-- Warning Modal for Tab Switching -->
+<div class="modal-warning" id="warningModal" style="display: none;">
+    <h2><i class="fas fa-exclamation-triangle fa-lg me-2"></i>Warning: Tab Switching Detected</h2>
+    <p>Switching tabs or applications during an exam is not allowed. This incident has been recorded.
+        Continued violations may result in automatic exam submission or disqualification.</p>
+    <button class="btn btn-light" onclick="closeWarningModal()">Return to Exam</button>
+    <p class="mt-4"><small>This is warning <span id="warningCount">1</span> of 3.
+        After 3 warnings, your exam may be automatically submitted.</small></p>
+</div>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="#">Emerging India Analytics</a>
+        <div class="ml-auto d-flex align-items-center text-white">
+            <i class="fas fa-user-circle me-2"></i> {{ current_user.name }}
+        </div>
+    </div>
+</nav>
+
+<!-- Timer -->
+<div class="timer-container" id="timerContainer">
+    <i class="fas fa-clock"></i> <span id="timer">--:--</span>
+</div>
+
+<div class="container-fluid">
+    <div class="exam-layout">
+        <!-- Question Numbers Sidebar -->
+        <div class="question-sidebar">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">Questions</h3>
+                <div class="progress-info">
+                    <span id="answeredCount">0</span>/<span id="totalQuestions">{{ exam.questions|length }}</span>
+                </div>
+            </div>
+
+            <div class="question-list">
+                {% for question in exam.questions %}
+                <button type="button" class="question-btn
+                                {% if question.id in answers %}answered{% endif %}
+                                {% if loop.index == 1 %}current{% endif %}"
+                        onclick="showQuestion({{ loop.index }})" id="questionBtn{{ loop.index }}">
+                    <span class="question-number">{{ loop.index }}</span>
+                    <span class="question-status">
+                        {% if question.id in answers %}
+                            <i class="fas fa-check-circle"></i>
+                        {% else %}
+                            <i class="fas fa-circle"></i>
+                        {% endif %}
+                    </span>
+                </button>
+                {% endfor %}
+            </div>
+
+            <div class="exam-info">
+                <div class="info-item">
+                    <i class="fas fa-stopwatch me-2"></i> Duration: {{ exam.duration }} minutes
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-clipboard-list me-2"></i> Total: {{ exam.questions|length }} Questions
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Display Area -->
+        <div class="question-content">
+            <div class="exam-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="exam-title">{{ exam.title }}</h1>
+                    <span class="badge bg-primary"><span id="currentQuestion">1</span> of {{ exam.questions|length }}</span>
+                </div>
+            </div>
+
+            <div class="exam-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('take_exam', exam_id=exam.id) }}" id="examForm">
+                    <!-- Questions -->
+                    {% for question in exam.questions %}
+                    <div class="question-container" id="question{{ loop.index }}" style="{% if loop.index > 1 %}display: none;{% endif %}">
+                        <div class="question-header">
+                            <h5><i class="fas fa-question-circle me-2"></i>Question {{ loop.index }}</h5>
+                            <span class="badge {% if question.id in answers %}bg-success{% else %}bg-secondary{% endif %}" id="status_{{ question.id }}">
+                                {% if question.id in answers %}
+                                    <i class="fas fa-check me-1"></i> Answered
+                                {% else %}
+                                    <i class="fas fa-times me-1"></i> Unanswered
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <p class="question-text">{{ question.question_text }}</p>
+
+                        {% if question.question_image %}
+                        <img src="{{ url_for('static', filename='uploads/' + question.question_image) }}"
+                             alt="Question image" class="question-image">
+                        {% endif %}
+
+                        <div class="options-container mt-4">
+                            <div class="option-container">
+                                <div class="form-check {% if question.id in answers and answers[question.id] == 'a' %}selected{% endif %}">
+                                    <input class="form-check-input" type="radio" name="answer_{{ question.id }}"
+                                           id="option_a_{{ question.id }}" value="a"
+                                           {% if question.id in answers and answers[question.id] == 'a' %}checked{% endif %}
+                                           onchange="updateAnswerStatus({{ question.id }}, {{ loop.index }})">
+                                    <label class="form-check-label" for="option_a_{{ question.id }}">
+                                        {{ question.option_a }}
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="option-container">
+                                <div class="form-check {% if question.id in answers and answers[question.id] == 'b' %}selected{% endif %}">
+                                    <input class="form-check-input" type="radio" name="answer_{{ question.id }}"
+                                           id="option_b_{{ question.id }}" value="b"
+                                           {% if question.id in answers and answers[question.id] == 'b' %}checked{% endif %}
+                                           onchange="updateAnswerStatus({{ question.id }}, {{ loop.index }})">
+                                    <label class="form-check-label" for="option_b_{{ question.id }}">
+                                        {{ question.option_b }}
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="option-container">
+                                <div class="form-check {% if question.id in answers and answers[question.id] == 'c' %}selected{% endif %}">
+                                    <input class="form-check-input" type="radio" name="answer_{{ question.id }}"
+                                           id="option_c_{{ question.id }}" value="c"
+                                           {% if question.id in answers and answers[question.id] == 'c' %}checked{% endif %}
+                                           onchange="updateAnswerStatus({{ question.id }}, {{ loop.index }})">
+                                    <label class="form-check-label" for="option_c_{{ question.id }}">
+                                        {{ question.option_c }}
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="option-container">
+                                <div class="form-check {% if question.id in answers and answers[question.id] == 'd' %}selected{% endif %}">
+                                    <input class="form-check-input" type="radio" name="answer_{{ question.id }}"
+                                           id="option_d_{{ question.id }}" value="d"
+                                           {% if question.id in answers and answers[question.id] == 'd' %}checked{% endif %}
+                                           onchange="updateAnswerStatus({{ question.id }}, {{ loop.index }})">
+                                    <label class="form-check-label" for="option_d_{{ question.id }}">
+                                        {{ question.option_d }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Navigation buttons -->
+                    <div class="question-navigation">
+                        <button type="button" id="prevBtn" class="btn btn-outline-secondary" onclick="navigateToPrevious()">
+                            <i class="fas fa-arrow-left me-1"></i> Previous
+                        </button>
+                        <button type="button" id="nextBtn" class="btn btn-outline-primary" onclick="navigateToNext()">
+                            Next <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <button type="submit" name="save_progress" class="btn btn-secondary">
+                            <i class="fas fa-save me-2"></i> Save Progress
+                        </button>
+                        <button type="submit" name="submit_exam" class="btn btn-primary"
+                                onclick="return confirmSubmit()">
+                            <i class="fas fa-paper-plane me-2"></i> Submit Exam
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap and Custom JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Global constants
+const MAX_WARNINGS = 3;
+let warningCount = 0;
+let examDuration = {{ exam.duration }} * 60; // Convert minutes to seconds
+let timeRemaining = examDuration;
+let timerInterval;
+
+// Disable right-click menu
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    return false;
+});
+
+/**
+ * Shows a specific question and updates UI
+ * @param {number} questionNumber - The question number to display
+ */
+function showQuestion(questionNumber) {
+    // Hide all questions
+    const questions = document.querySelectorAll('.question-container');
+    questions.forEach(q => q.style.display = 'none');
+
+    // Show the selected question
+    document.getElementById(`question${questionNumber}`).style.display = 'block';
+
+    // Update the current question indicator
+    document.getElementById('currentQuestion').textContent = questionNumber;
+
+    // Update navigation buttons
+    updateNavigationButtons(questionNumber, questions.length);
+
+    // Update sidebar highlighting
+    const buttons = document.querySelectorAll('.question-btn');
+    buttons.forEach(btn => btn.classList.remove('current'));
+    document.getElementById(`questionBtn${questionNumber}`).classList.add('current');
+
+    // Scroll to top of question
+    window.scrollTo(0, 0);
+}
+
+/**
+ * Updates the navigation buttons state based on current question
+ * @param {number} currentQuestionNumber - The current question number
+ * @param {number} totalQuestions - Total number of questions
+ */
+function updateNavigationButtons(currentQuestionNumber, totalQuestions) {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // Disable previous button if on first question
+    if (currentQuestionNumber === 1) {
+        prevBtn.disabled = true;
+        prevBtn.classList.add('disabled');
+    } else {
+        prevBtn.disabled = false;
+        prevBtn.classList.remove('disabled');
+    }
+
+    // Change next button to "Submit" if on last question
+    if (currentQuestionNumber === totalQuestions) {
+        nextBtn.innerHTML = 'Submit Exam <i class="fas fa-paper-plane ms-1"></i>';
+        nextBtn.classList.remove('btn-outline-primary');
+        nextBtn.classList.add('btn-primary');
+        nextBtn.onclick = function() {
+            if (confirmSubmit()) {
+                document.getElementById('examForm').submit();
+            }
+        };
+    } else {
+        nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right ms-1"></i>';
+        nextBtn.classList.remove('btn-primary');
+        nextBtn.classList.add('btn-outline-primary');
+        nextBtn.onclick = navigateToNext;
+    }
+}
+
+/**
+ * Navigate to the previous question
+ */
+function navigateToPrevious() {
+    const currentQuestion = parseInt(document.getElementById('currentQuestion').textContent);
+    if (currentQuestion > 1) {
+        showQuestion(currentQuestion - 1);
+    }
+}
+
+/**
+ * Navigate to the next question
+ */
+function navigateToNext() {
+    const currentQuestion = parseInt(document.getElementById('currentQuestion').textContent);
+    const totalQuestions = document.querySelectorAll('.question-container').length;
+
+    if (currentQuestion < totalQuestions) {
+        showQuestion(currentQuestion + 1);
+    }
+}
+
+/**
+ * Updates the answered status of a question
+ * @param {number} questionId - The question ID
+ * @param {number} questionNumber - The question number in sequence
+ */
+function updateAnswerStatus(questionId, questionNumber) {
+    // Update status badge
+    const statusBadge = document.getElementById(`status_${questionId}`);
+    statusBadge.innerHTML = '<i class="fas fa-check me-1"></i> Answered';
+    statusBadge.classList.remove('bg-secondary');
+    statusBadge.classList.add('bg-success');
+
+    // Update sidebar button
+    const sidebarBtn = document.getElementById(`questionBtn${questionNumber}`);
+    sidebarBtn.classList.add('answered');
+
+    // Update the form-check div to show it's selected
+    const selectedOption = document.querySelector(`input[name="answer_${questionId}"]:checked`);
+    if (selectedOption) {
+        // Remove selected class from all options for this question
+        const allOptions = document.querySelectorAll(`input[name="answer_${questionId}"]`);
+        allOptions.forEach(option => {
+            option.closest('.form-check').classList.remove('selected');
+        });
+
+        // Add selected class to the checked option
+        selectedOption.closest('.form-check').classList.add('selected');
+    }
+
+    // Update the count of answered questions
+    updateAnsweredCount();
+}
+
+/**
+ * Updates the count of answered questions
+ */
+function updateAnsweredCount() {
+    const answeredQuestions = document.querySelectorAll('.question-btn.answered').length;
+    const totalQuestions = document.querySelectorAll('.question-container').length;
+
+    document.getElementById('answeredCount').textContent = answeredQuestions;
+}
+
+/**
+ * Shows warning modal for tab switching
+ */
+function showWarningModal() {
+    warningCount++;
+    document.getElementById('warningCount').textContent = warningCount;
+    document.getElementById('warningModal').style.display = 'flex';
+
+    if (warningCount >= MAX_WARNINGS) {
+        // Auto-submit after max warnings
+        setTimeout(function() {
+            alert("You have reached the maximum number of warnings. Your exam will be submitted automatically.");
+            document.querySelector('button[name="submit_exam"]').click();
+        }, 3000);
+    }
+}
+
+/**
+ * Closes the warning modal
+ */
+function closeWarningModal() {
+    document.getElementById('warningModal').style.display = 'none';
+}
+
+/**
+ * Confirms exam submission
+ */
+function confirmSubmit() {
+    const answeredQuestions = document.querySelectorAll('.question-btn.answered').length;
+    const totalQuestions = document.querySelectorAll('.question-container').length;
+
+    if (answeredQuestions < totalQuestions) {
+        return confirm(`You have only answered ${answeredQuestions} out of ${totalQuestions} questions. Are you sure you want to submit your exam?`);
+    }
+    return confirm("Are you sure you want to submit your exam? Once submitted, you cannot make changes.");
+}
+
+/**
+ * Format time in MM:SS format
+ * @param {number} seconds - Time in seconds
+ */
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Updates the timer display
+ */
+function updateTimer() {
+    if (timeRemaining <= 0) {
+        clearInterval(timerInterval);
+        alert("Time's up! Your exam will be submitted automatically.");
+        document.querySelector('button[name="submit_exam"]').click();
+        return;
+    }
+
+    timeRemaining--;
+    document.getElementById('timer').textContent = formatTime(timeRemaining);
+
+    // Change timer color when less than 5 minutes remaining
+    if (timeRemaining <= 300) {
+        document.getElementById('timerContainer').classList.add('low-time');
+    }
+}
+
+/**
+ * Detect tab switching
+ */
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+        showWarningModal();
+    }
+});
+
+/**
+ * Initialize the exam when page loads
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize timer
+    document.getElementById('timer').textContent = formatTime(examDuration);
+    timerInterval = setInterval(updateTimer, 1000);
+
+    // Initialize answered questions count
+    updateAnsweredCount();
+
+    // Highlight the first question's button as current
+    document.getElementById('questionBtn1').classList.add('current');
+
+    // Update navigation buttons for the first question
+    updateNavigationButtons(1, document.querySelectorAll('.question-container').length);
+
+    // Detect any answer changes
+    const radioButtons = document.querySelectorAll('input[type="radio"]');
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const questionId = this.name.replace('answer_', '');
+            const questionNumber = Array.from(document.querySelectorAll('.question-container')).findIndex(q => q.querySelector(`input[name="answer_${questionId}"]`)) + 1;
+            updateAnswerStatus(questionId, questionNumber);
+        });
+    });
+
+    // Prevent form submission when pressing Enter
+    document.getElementById('examForm').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
+    });
+
+    // Set up fullscreen when starting the exam
+    if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+    } else if (document.documentElement.webkitRequestFullscreen) {
+        document.documentElement.webkitRequestFullscreen();
+    } else if (document.documentElement.msRequestFullscreen) {
+        document.documentElement.msRequestFullscreen();
+    }
+});
+
+/**
+ * Block common key combinations like F12, Ctrl+Shift+I, etc.
+ */
+document.addEventListener('keydown', function(e) {
+    if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+        (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+        (e.ctrlKey && e.key === 'U')
+    ) {
+        e.preventDefault();
+        showWarningModal();
+    }
+});
+
+/**
+ * Detect fullscreen changes
+ */
+document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement &&
+        !document.webkitFullscreenElement &&
+        !document.mozFullScreenElement &&
+        !document.msFullscreenElement) {
+        showWarningModal();
+    }
+});
+</script>
+</body>
+</html>

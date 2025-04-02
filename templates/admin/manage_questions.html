@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Questions - Online Examination System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #a6223c;
+            --primary-color-light: #d14560;
+            --primary-color-dark: #7a1a2e;
+        }
+
+        .navbar-dark.bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+
+        .sidebar .nav-link {
+            color: #333;
+            border-radius: 0;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .sidebar .nav-link:hover:not(.active) {
+            background-color: #e9ecef;
+        }
+
+        .main-content {
+            padding: 20px;
+        }
+
+        .question-form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+
+        .question-form:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .question-list {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+            transition: all 0.3s;
+        }
+
+        .question-list:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .option-input {
+            margin-bottom: 15px;
+        }
+
+        .question-item {
+            border-left: 5px solid var(--primary-color);
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f8f9fa;
+            border-radius: 0 5px 5px 0;
+            transition: all 0.3s;
+        }
+
+        .question-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .option-text {
+            margin-bottom: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .option-correct {
+            background-color: #d1e7dd;
+            border-color: #badbcc;
+        }
+
+        .question-image-preview {
+            max-width: 200px;
+            max-height: 150px;
+            margin-top: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .page-title {
+            position: relative;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+        }
+
+        .page-title:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 70px;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        /* Animation */
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        .slide-in {
+            animation: slideIn 0.6s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-color-dark);
+            border-color: var(--primary-color-dark);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+    <!-- Rest of the HTML remains the same -->
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Online Exam System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> {{ current_user.email }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('create_exam') }}">
+                                <i class="bi bi-plus-circle"></i> Create Exam
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2 page-title">Manage Questions - {{ exam.title }}</h1>
+                    <div>
+                        <a href="{{ url_for('edit_exam', exam_id=exam.id) }}" class="btn btn-outline-primary me-2">
+                            <i class="bi bi-pencil"></i> Edit Exam
+                        </a>
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="alert alert-info fade-in">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <h5 class="mb-1">Exam Details</h5>
+                            <p class="mb-0">Duration: {{ exam.duration }} minutes</p>
+                            <p class="mb-0">Status:
+                                {% if exam.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="ms-auto">
+                            <p class="mb-0">Total Questions: <strong>{{ questions | length }}</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question-form slide-in">
+                    <h3>Add New Question</h3>
+                    <form method="POST" action="{{ url_for('manage_questions', exam_id=exam.id) }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="question_text" class="form-label">Question Text</label>
+                            <textarea class="form-control" id="question_text" name="question_text" rows="2" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="question_image" class="form-label">Question Image (Optional)</label>
+                            <input class="form-control" type="file" id="question_image" name="question_image" accept="image/*">
+                            <div class="form-text">Upload an image if needed for the question.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="option-input">
+                                    <label for="option_a" class="form-label">Option A</label>
+                                    <textarea class="form-control" id="option_a" name="option_a" rows="2" required></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="option-input">
+                                    <label for="option_b" class="form-label">Option B</label>
+                                    <textarea class="form-control" id="option_b" name="option_b" rows="2" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="option-input">
+                                    <label for="option_c" class="form-label">Option C</label>
+                                    <textarea class="form-control" id="option_c" name="option_c" rows="2" required></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="option-input">
+                                    <label for="option_d" class="form-label">Option D</label>
+                                    <textarea class="form-control" id="option_d" name="option_d" rows="2" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="correct_option" class="form-label">Correct Option</label>
+                            <select class="form-select" id="correct_option" name="correct_option" required>
+                                <option value="" selected disabled>Select the correct option</option>
+                                <option value="a">Option A</option>
+                                <option value="b">Option B</option>
+                                <option value="c">Option C</option>
+                                <option value="d">Option D</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Add Question
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="question-list fade-in">
+                    <h3>Existing Questions</h3>
+
+                    {% if questions %}
+                        {% for question in questions %}
+                            <div class="question-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5>Question {{ loop.index }}</h5>
+                                    <form method="POST" action="{{ url_for('delete_question', question_id=question.id) }}"
+                                          onsubmit="return confirm('Are you sure you want to delete this question?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <p><strong>{{ question.question_text }}</strong></p>
+
+                                {% if question.question_image %}
+                                    <img src="{{ url_for('static', filename='uploads/' + question.question_image) }}"
+                                         alt="Question image" class="question-image-preview">
+                                {% endif %}
+
+                                <div class="options-container mt-3">
+                                    <div class="option-text {{ 'option-correct' if question.correct_option == 'a' }}">
+                                        <strong>A:</strong> {{ question.option_a }}
+                                        {% if question.correct_option == 'a' %}
+                                            <span class="badge bg-success">Correct</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="option-text {{ 'option-correct' if question.correct_option == 'b' }}">
+                                        <strong>B:</strong> {{ question.option_b }}
+                                        {% if question.correct_option == 'b' %}
+                                            <span class="badge bg-success">Correct</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="option-text {{ 'option-correct' if question.correct_option == 'c' }}">
+                                        <strong>C:</strong> {{ question.option_c }}
+                                        {% if question.correct_option == 'c' %}
+                                            <span class="badge bg-success">Correct</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="option-text {{ 'option-correct' if question.correct_option == 'd' }}">
+                                        <strong>D:</strong> {{ question.option_d }}
+                                        {% if question.correct_option == 'd' %}
+                                            <span class="badge bg-success">Correct</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> No questions added yet. Add questions above.
+                        </div>
+                    {% endif %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Animation on scroll
+        window.addEventListener('scroll', function() {
+            const elements = document.querySelectorAll('.question-item');
+            elements.forEach(element => {
+                const elementPosition = element.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                if (elementPosition < windowHeight - 100) {
+                    element.classList.add('slide-in');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

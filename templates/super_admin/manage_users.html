@@ -1,0 +1,864 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Users - Emerging India Analytics{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+<style>
+    .sidebar {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar .list-group-item {
+        border: none;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar .list-group-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+    }
+
+    .sidebar .list-group-item.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .user-avatar {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 15px;
+    }
+
+    .avatar-svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .badge-role {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+
+    .badge-super-admin {
+        background-color: var(--primary-color);
+    }
+
+    .filter-card {
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(166, 34, 60, 0.05);
+    }
+
+    .users-table th {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .pagination .page-link {
+        color: var(--primary-color);
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-box .form-control {
+        padding-left: 2.5rem;
+    }
+
+    .search-box .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    .status-active {
+        background-color: #28a745;
+    }
+
+    .status-inactive {
+        background-color: #dc3545;
+    }
+
+    .user-details {
+        margin-bottom: 1rem;
+    }
+
+    .user-details .label {
+        font-weight: bold;
+        color: #6c757d;
+    }
+
+    .btn-action {
+        margin-right: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Navbar modifications for super admin -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Super Admin nav items to the navbar
+    const navbarNav = document.querySelector('#navbarNav .navbar-nav');
+
+    // Check if navbar exists and user is authenticated
+    if (navbarNav) {
+        // Clear existing nav items
+        navbarNav.innerHTML = `
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/super-admin/dashboard' %}active{% endif %}" href="{{ url_for('super_admin_dashboard') }}">Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/super-admin/users' %}active{% endif %}" href="{{ url_for('manage_users') }}">Manage Users</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#reportsModal">Reports</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+            </li>
+        `;
+    }
+});
+</script>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar - Left column (3/12 width) -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <div class="user-avatar">
+                        {% if current_user.avatar %}
+                            {{ avatar_svg(current_user.avatar)|safe }}
+                        {% else %}
+                            <i class="bi bi-person-circle" style="font-size: 4rem; color: var(--primary-color);"></i>
+                        {% endif %}
+                    </div>
+                    <h5 class="card-title">{{ current_user.email }}</h5>
+                    <p class="card-text">
+                        <span class="badge badge-role badge-super-admin">Super Administrator</span>
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
+                            <i class="bi bi-box-arrow-right me-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar mb-4">
+                <div class="list-group shadow-sm">
+                    <a href="{{ url_for('super_admin_dashboard') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('manage_users') }}" class="list-group-item list-group-item-action active">
+                        <i class="bi bi-people-fill me-2"></i> Manage Users
+                    </a>
+                    <a href="#reportsModal" data-bs-toggle="modal" class="list-group-item list-group-item-action">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i> Generate Reports
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>User Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Total Users</span>
+                        <span class="badge bg-primary">{{ user_stats.total_users }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Students</span>
+                        <span class="badge bg-success">{{ user_stats.students }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Admins</span>
+                        <span class="badge bg-info">{{ user_stats.admins }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Super Admins</span>
+                        <span class="badge bg-danger">{{ user_stats.super_admins }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content - Right column (9/12 width) -->
+        <div class="col-md-9">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header shadow-sm mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0"><i class="bi bi-people-fill me-2"></i>Manage Users</h2>
+                        <p class="mb-0">View, edit, and manage all users in the system</p>
+                    </div>
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                        <i class="bi bi-person-plus-fill me-1"></i> Add New User
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter and Search Card -->
+            <div class="card filter-card shadow-sm mb-4">
+                <div class="card-body">
+                    <form id="filterForm" method="get" action="{{ url_for('manage_users') }}">
+                        <div class="row align-items-end">
+                            <div class="col-md-3 mb-3 mb-md-0">
+                                <label for="role_filter" class="form-label">Role</label>
+                                <select class="form-select" id="role_filter" name="role">
+                                    <option value="all" {% if request.args.get('role') == 'all' or not request.args.get('role') %}selected{% endif %}>All Roles</option>
+                                    <option value="student" {% if request.args.get('role') == 'student' %}selected{% endif %}>Students</option>
+                                    <option value="admin" {% if request.args.get('role') == 'admin' %}selected{% endif %}>Admins</option>
+                                    <option value="super_admin" {% if request.args.get('role') == 'super_admin' %}selected{% endif %}>Super Admins</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3 mb-md-0">
+                                <label for="stream_filter" class="form-label">Stream</label>
+                                <select class="form-select" id="stream_filter" name="stream">
+                                    <option value="all" {% if request.args.get('stream') == 'all' or not request.args.get('stream') %}selected{% endif %}>All Streams</option>
+                                    {% for stream, count in stream_data.items() %}
+                                    <option value="{{ stream }}" {% if request.args.get('stream') == stream %}selected{% endif %}>{{ stream }} ({{ count }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3 mb-md-0">
+                                <label for="verification_filter" class="form-label">Verification Status</label>
+                                <select class="form-select" id="verification_filter" name="verification">
+                                    <option value="all" {% if request.args.get('verification') == 'all' or not request.args.get('verification') %}selected{% endif %}>All</option>
+                                    <option value="verified" {% if request.args.get('verification') == 'verified' %}selected{% endif %}>Verified</option>
+                                    <option value="unverified" {% if request.args.get('verification') == 'unverified' %}selected{% endif %}>Unverified</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3 mb-md-0">
+                                <div class="search-box">
+                                    <i class="bi bi-search search-icon"></i>
+                                    <input type="text" class="form-control" placeholder="Search users..." name="search" value="{{ request.args.get('search', '') }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12 text-end">
+                                <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary me-2">Clear Filters</a>
+                                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Users Table Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-table me-2"></i>Users List</h5>
+                    <span class="badge bg-light text-dark">{{ users|length }} Users</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover users-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Email</th>
+                                    <th scope="col">Role</th>
+                                    <th scope="col">Stream</th>
+                                    <th scope="col">Verified</th>
+                                    <th scope="col">Registered</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ loop.index + (page - 1) * per_page }}</td>
+                                    <td>{{ user.name or 'Not Set' }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.role == 'super_admin' %}
+                                        <span class="badge bg-danger">Super Admin</span>
+                                        {% elif user.role == 'admin' %}
+                                        <span class="badge bg-primary">Admin</span>
+                                        {% else %}
+                                        <span class="badge bg-success">Student</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.stream or 'Not Set' }}</td>
+                                    <td>
+                                        {% if user.is_verified %}
+                                        <span class="status-indicator status-active"></span> Verified
+                                        {% else %}
+                                        <span class="status-indicator status-inactive"></span> Unverified
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary btn-action" onclick="viewUserDetails({{ user.id }})" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary btn-action" title="Edit User">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% if user.role == 'student' %}
+                                            <button class="btn btn-sm btn-outline-info btn-action" onclick="promoteUser({{ user.id }})" title="Promote to Admin">
+                                                <i class="bi bi-arrow-up-circle"></i>
+                                            </button>
+                                            {% elif user.role == 'admin' %}
+                                            <button class="btn btn-sm btn-outline-warning btn-action" onclick="demoteUser({{ user.id }})" title="Demote to Student">
+                                                <i class="bi bi-arrow-down-circle"></i>
+                                            </button>
+                                            {% endif %}
+                                            {% if not user.is_verified %}
+                                            <button class="btn btn-sm btn-outline-success btn-action" onclick="verifyUser({{ user.id }})" title="Verify User">
+                                                <i class="bi bi-check-circle"></i>
+                                            </button>
+                                            {% endif %}
+                                            {% if user.id != current_user.id and user.role != 'super_admin' %}
+                                            <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteUser({{ user.id }})" title="Delete User">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No users found matching your criteria</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if total_pages > 1 %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-4">
+                            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('manage_users', page=page-1, **request.args) if page > 1 else '#' }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% for p in range(1, total_pages + 1) %}
+                            <li class="page-item {% if p == page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('manage_users', page=p, **request.args) }}">{{ p }}</a>
+                            </li>
+                            {% endfor %}
+                            <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('manage_users', page=page+1, **request.args) if page < total_pages else '#' }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View User Details Modal -->
+<div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="viewUserModalLabel"><i class="bi bi-person-badge me-2"></i>User Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4" id="userAvatar">
+                    <i class="bi bi-person-circle" style="font-size: 5rem; color: var(--primary-color);"></i>
+                </div>
+                <div class="user-details">
+                    <div class="row mb-2">
+                        <div class="col-4 label">Name:</div>
+                        <div class="col-8" id="userName">Loading...</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 label">Email:</div>
+                        <div class="col-8" id="userEmail">Loading...</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 label">Role:</div>
+                        <div class="col-8" id="userRole">Loading...</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 label">Stream:</div>
+                        <div class="col-8" id="userStream">Loading...</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 label">Status:</div>
+                        <div class="col-8" id="userVerification">Loading...</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 label">Registered:</div>
+                        <div class="col-8" id="userRegistered">Loading...</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 label">Last Login:</div>
+                        <div class="col-8" id="userLastLogin">Loading...</div>
+                    </div>
+                </div>
+                <div id="userExams" class="mt-4">
+                    <h6 class="border-bottom pb-2">Recent Activity</h6>
+                    <div id="userExamsList">Loading...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" class="btn btn-primary" id="editUserLink">Edit User</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addUserModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Add New User</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm" method="post" action="{{ url_for('add_user') }}">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" name="name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password *</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role *</label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="student">Student</option>
+                            <option value="admin">Administrator</option>
+                            <option value="super_admin">Super Administrator</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stream" class="form-label">Stream</label>
+                        <select class="form-select" id="stream" name="stream">
+                            <option value="">Select Stream (Optional)</option>
+                            {% for stream in stream_data.keys() %}
+                            <option value="{{ stream }}">{{ stream }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" value="1" id="is_verified" name="is_verified" checked>
+                        <label class="form-check-label" for="is_verified">
+                            Account Verified
+                        </label>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                Are you sure you want to proceed with this action?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reports Modal -->
+<div class="modal fade" id="reportsModal" tabindex="-1" aria-labelledby="reportsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="reportsModalLabel"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Generate Reports</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('generate_report') }}" method="post">
+                    <div class="mb-3">
+                        <label for="report_type" class="form-label">Report Type</label>
+                        <select class="form-select" id="report_type" name="report_type" required>
+                            <option value="" selected disabled>Select a report type</option>
+                            <option value="users">User Management Report</option>
+                            <option value="exams">Exam Report</option>
+                            <option value="students">Student Performance Report</option>
+                            <option value="proctoring">Proctoring Events Report</option>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic fields based on report type -->
+                    <div id="exam-fields" class="d-none">
+                        <div class="mb-3">
+                            <label for="exam_id" class="form-label">Select Exam (optional)</label>
+                            <select class="form-select" id="exam_id" name="exam_id">
+                                <option value="">All Exams</option>
+                                {% for exam in exams %}
+                                <option value="{{ exam.id }}">{{ exam.title }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Leave blank to generate a report for all exams</div>
+                        </div>
+                    </div>
+
+                    <div id="student-fields" class="d-none">
+                        <div class="mb-3">
+                            <label for="student_search" class="form-label">Student Search (optional)</label>
+                            <input type="text" class="form-control" id="student_search" name="student_search" placeholder="Name or email">
+                        </div>
+                        <div class="mb-3">
+                            <label for="stream" class="form-label">Stream (optional)</label>
+                            <select class="form-select" id="stream" name="stream">
+                                <option value="">All Streams</option>
+                                {% for stream, count in stream_data.items() %}
+                                <option value="{{ stream }}">{{ stream }} ({{ count }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="user-fields" class="d-none">
+                        <div class="mb-3">
+                            <label for="role_filter" class="form-label">User Role</label>
+                            <select class="form-select" id="role_filter" name="role_filter">
+                                <option value="all">All Roles</option>
+                                <option value="student">Students</option>
+                                <option value="admin">Admins</option>
+                                <option value="super_admin">Super Admins</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="proctoring-fields" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label">Event Types</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="event_types" value="tab_switch" id="tab_switch" checked>
+                                <label class="form-check-label" for="tab_switch">Tab Switches</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="event_types" value="fullscreen_exit" id="fullscreen_exit" checked>
+                                <label class="form-check-label" for="fullscreen_exit">Fullscreen Exits</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="event_types" value="copy_attempt" id="copy_attempt" checked>
+                                <label class="form-check-label" for="copy_attempt">Copy Attempts</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="event_types" value="paste_attempt" id="paste_attempt" checked>
+                                <label class="form-check-label" for="paste_attempt">Paste Attempts</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="event_types" value="mouse_leave" id="mouse_leave" checked>
+                                <label class="form-check-label" for="mouse_leave">Mouse Leave Events</label>
+                            </div>
+                            <div class="form-check">
+                               <input class="form-check-input" type="checkbox" name="event_types" value="periodic_screenshot" id="periodic_screenshot" checked>
+                                <label class="form-check-label" for="periodic_screenshot">Periodic Screenshots</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="report_format" class="form-label">Report Format</label>
+                        <select class="form-select" id="report_format" name="report_format">
+                            <option value="excel" selected>Excel (.xlsx)</option>
+                            <option value="csv">CSV</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger">Generate Report</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide dynamic form fields based on selected report type
+    const reportTypeSelect = document.getElementById('report_type');
+    if (reportTypeSelect) {
+        reportTypeSelect.addEventListener('change', function() {
+            // Hide all conditional fields first
+            document.getElementById('exam-fields').classList.add('d-none');
+            document.getElementById('student-fields').classList.add('d-none');
+            document.getElementById('user-fields').classList.add('d-none');
+            document.getElementById('proctoring-fields').classList.add('d-none');
+
+            // Show relevant fields based on selection
+            const selectedType = this.value;
+            if (selectedType === 'exams') {
+                document.getElementById('exam-fields').classList.remove('d-none');
+            } else if (selectedType === 'students') {
+                document.getElementById('exam-fields').classList.remove('d-none');
+                document.getElementById('student-fields').classList.remove('d-none');
+            } else if (selectedType === 'users') {
+                document.getElementById('user-fields').classList.remove('d-none');
+            } else if (selectedType === 'proctoring') {
+                document.getElementById('exam-fields').classList.remove('d-none');
+                document.getElementById('proctoring-fields').classList.remove('d-none');
+            }
+        });
+    }
+
+    // Function to view user details
+    window.viewUserDetails = function(userId) {
+        // Reset modal content
+        document.getElementById('userName').textContent = 'Loading...';
+        document.getElementById('userEmail').textContent = 'Loading...';
+        document.getElementById('userRole').textContent = 'Loading...';
+        document.getElementById('userStream').textContent = 'Loading...';
+        document.getElementById('userVerification').textContent = 'Loading...';
+        document.getElementById('userRegistered').textContent = 'Loading...';
+        document.getElementById('userLastLogin').textContent = 'Loading...';
+        document.getElementById('userExamsList').textContent = 'Loading...';
+        
+        // Set edit user link
+        document.getElementById('editUserLink').href = `/super-admin/user/${userId}/edit`;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('viewUserModal'));
+        modal.show();
+        
+        // Fetch user details
+        fetch(`/super-admin/api/user/${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const user = data.user;
+                    
+                    // Update modal content
+                    document.getElementById('userName').textContent = user.name || 'Not Set';
+                    document.getElementById('userEmail').textContent = user.email;
+                    
+                    // Set role with appropriate badge
+                    let roleHtml = '';
+                    if (user.role === 'super_admin') {
+                        roleHtml = '<span class="badge bg-danger">Super Admin</span>';
+                    } else if (user.role === 'admin') {
+                        roleHtml = '<span class="badge bg-primary">Admin</span>';
+                    } else {
+                        roleHtml = '<span class="badge bg-success">Student</span>';
+                    }
+                    document.getElementById('userRole').innerHTML = roleHtml;
+                    
+                    // Set other fields
+                    document.getElementById('userStream').textContent = user.stream || 'Not Set';
+                    
+                    // Set verification status
+                    let verificationHtml = '';
+                    if (user.is_verified) {
+                        verificationHtml = '<span class="status-indicator status-active"></span> Verified';
+                    } else {
+                        verificationHtml = '<span class="status-indicator status-inactive"></span> Unverified';
+                    }
+                    document.getElementById('userVerification').innerHTML = verificationHtml;
+                    
+                    document.getElementById('userRegistered').textContent = new Date(user.created_at).toLocaleDateString();
+                    document.getElementById('userLastLogin').textContent = user.last_login ? new Date(user.last_login).toLocaleString() : 'Never';
+                    
+                    // Show user exams if available
+                    if (user.exams && user.exams.length > 0) {
+                        let examsHtml = '<ul class="list-group">';
+                        user.exams.forEach(exam => {
+                            examsHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                ${exam.title}
+                                <span class="badge ${exam.status === 'Completed' ? 'bg-success' : (exam.status === 'In Progress' ? 'bg-warning text-dark' : 'bg-secondary')}">${exam.status}</span>
+                            </li>`;
+                        });
+                        examsHtml += '</ul>';
+                        document.getElementById('userExamsList').innerHTML = examsHtml;
+                    } else {
+                        document.getElementById('userExamsList').innerHTML = '<p class="text-muted">No exam activity found</p>';
+                    }
+                } else {
+                    // Show error
+                    document.getElementById('userName').textContent = 'Error loading user data';
+                    document.getElementById('userEmail').textContent = '';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching user details:', error);
+                document.getElementById('userName').textContent = 'Error loading user data';
+                document.getElementById('userEmail').textContent = '';
+            });
+    };
+
+    // Function to show confirmation modal
+    window.showConfirmModal = function(message, callback) {
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        document.getElementById('confirmModalBody').textContent = message;
+        document.getElementById('confirmActionBtn').onclick = function() {
+            callback();
+            modal.hide();
+        };
+        modal.show();
+    };
+
+    // Function to promote user to admin
+    window.promoteUser = function(userId) {
+        showConfirmModal('Are you sure you want to promote this user to admin?', function() {
+            fetch(`/super-admin/user/${userId}/promote`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('User promoted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing your request.');
+            });
+        });
+    };
+
+    // Function to demote user to student
+    window.demoteUser = function(userId) {
+        showConfirmModal('Are you sure you want to demote this user to student?', function() {
+            fetch(`/super-admin/user/${userId}/demote`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('User demoted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing your request.');
+            });
+        });
+    };
+
+    // Function to verify user
+    window.verifyUser = function(userId) {
+        showConfirmModal('Are you sure you want to verify this user?', function() {
+            fetch(`/super-admin/user/${userId}/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('User verified successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing your request.');
+            });
+        });
+    };
+
+    // Function to delete user
+    window.deleteUser = function(userId) {
+        showConfirmModal('Are you sure you want to delete this user? This action cannot be undone.', function() {
+            fetch(`/super-admin/user/${userId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('User deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing your request.');
+            });
+        });
+    };
+});
+</script>
+{% endblock %}
