@@ -196,10 +196,11 @@ def send_verification_email(user):
     db.session.commit()
 
     verification_url = url_for('verify_email', token=token, _external=True)
-    msg = Message('Email Verification', recipients=[user.email])
+    msg = Message('Email Verification',
+                  recipients=[user.email],
+                  sender=app.config['MAIL_DEFAULT_SENDER'])  # Explicitly set the sender
     msg.body = f'Please click the link to verify your email: {verification_url}'
     mail.send(msg)
-
 
 def end_exam_timer(exam_id):
     with app.app_context():
