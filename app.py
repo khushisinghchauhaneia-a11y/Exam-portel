@@ -196,11 +196,21 @@ def send_verification_email(user):
     db.session.commit()
 
     verification_url = url_for('verify_email', token=token, _external=True)
-    msg = Message('Email Verification', recipients=[user.email])
+
+    # Get email sender from environment or use default
+    sender_email = app.config.get('MAIL_DEFAULT_SENDER') or app.config.get(
+        'MAIL_USERNAME') or 'noreply@emergingindia.com'
+
+    msg = Message('Email Verification',
+                  sender=sender_email,  # Explicitly set sender
+                  recipients=[user.email])
     msg.body = f'Please click the link to verify your email: {verification_url}'
-    mail.send(msg)
 
-
+    try:
+        mail.send(msg)
+    except Exception as e:
+        app.logger.error(f"Failed to send verification email: {str(e)}")
+        # Continue execution - user can request verification email later
 def end_exam_timer(exam_id):
     with app.app_context():
         exam = Exam.query.get(exam_id)
