@@ -196,12 +196,10 @@ def send_verification_email(user):
     db.session.commit()
 
     verification_url = url_for('verify_email', token=token, _external=True)
-    sender_email = os.getenv('MAIL_DEFAULT_SENDER') or 'noreply@emergingindia.com'
-    msg = Message('Email Verification',
-                  sender=sender_email,  # Add this line
-                  recipients=[user.email])
+    msg = Message('Email Verification', recipients=[user.email])
     msg.body = f'Please click the link to verify your email: {verification_url}'
     mail.send(msg)
+
 
 def end_exam_timer(exam_id):
     with app.app_context():
@@ -1964,6 +1962,8 @@ def delete_user(user_id):
     return jsonify({'success': True, 'message': 'User deleted successfully'})
 
 
+
+
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if current_user.is_authenticated:
@@ -1985,131 +1985,26 @@ def forgot_password():
             # Create reset password URL
             reset_url = url_for('reset_password', token=reset_token, _external=True)
 
-            # HTML email template
-            html_content = f'''
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Password Reset</title>
-                <style>
-                    body {{
-                        font-family: Arial, sans-serif;
-                        line-height: 1.6;
-                        color: #333333;
-                        margin: 0;
-                        padding: 0;
-                    }}
-                    .container {{
-                        max-width: 600px;
-                        margin: 0 auto;
-                        padding: 20px;
-                    }}
-                    .header {{
-                        background: linear-gradient(135deg, #85192f, #a6223c);
-                        padding: 20px;
-                        text-align: center;
-                        color: white;
-                        border-radius: 5px 5px 0 0;
-                    }}
-                    .content {{
-                        padding: 20px;
-                        background-color: #f8f9fa;
-                        border: 1px solid #ddd;
-                        border-top: none;
-                        border-radius: 0 0 5px 5px;
-                    }}
-                    .button {{
-                        display: inline-block;
-                        padding: 12px 24px;
-                        background: linear-gradient(135deg, #a6223c, #85192f);
-                        color: white;
-                        text-decoration: none;
-                        font-weight: bold;
-                        border-radius: 5px;
-                        margin: 20px 0;
-                        text-align: center;
-                    }}
-                    .footer {{
-                        text-align: center;
-                        margin-top: 20px;
-                        font-size: 12px;
-                        color: #777777;
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>Emerging India Analytics</h1>
-                    </div>
-                    <div class="content">
-                        <h2>Dear Learner,</h2>
-                        <p>We received a request to reset your password for your Emerging India Analytics account.</p>
-                        <p>To reset your password, please click the button below:</p>
-
-                        <div style="text-align: center;">
-                            <a href="{reset_url}" class="button">Reset Your Password</a>
-                        </div>
-
-                        <p>If the button above doesn't work, you can also copy and paste the following link into your browser:</p>
-                        <p style="word-break: break-all; font-size: 14px;"><a href="{reset_url}">{reset_url}</a></p>
-
-                        <p>This link will expire in 1 hour for security reasons.</p>
-
-                        <p>If you did not request a password reset, please ignore this email or contact our support team if you have concerns about your account security.</p>
-
-                        <p>Best regards,<br>
-                        The Emerging India Analytics Team</p>
-                    </div>
-                    <div class="footer">
-                        <p>&copy; 2025 Emerging India Educational Services Private LTD. All rights reserved.</p>
-                        <p>This is an automated message, please do not reply to this email.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            '''
-
-            # Plain text version as fallback
-            text_content = f'''Dear Learner,
-
-We received a request to reset your password for your Emerging India Analytics account.
-
-To reset your password, please visit the following link:
+            # Send password reset email
+            msg = Message('Password Reset Request',
+                          recipients=[user.email],
+                          sender=app.config['MAIL_DEFAULT_SENDER'])
+            msg.body = f'''To reset your password, visit the following link:
 {reset_url}
 
-This link will expire in 1 hour for security reasons.
+If you did not make this request, simply ignore this email and no changes will be made.
 
-If you did not request a password reset, please ignore this email or contact our support team.
-
-Best regards,
-The Emerging India Analytics Team
+This link will expire in 1 hour.
 '''
+            mail.send(msg)
 
-            # Explicitly set a sender email address
-            sender_email = app.config.get('MAIL_DEFAULT_SENDER') or 'noreply@emergingindia.com'
-
-            # Send password reset email
-            msg = Message('Password Reset - Emerging India Analytics',
-                          recipients=[user.email],
-                          sender=sender_email)
-            msg.body = text_content
-            msg.html = html_content
-
-            try:
-                mail.send(msg)
-                flash('An email with password reset instructions has been sent.', 'success')
-            except Exception as e:
-                app.logger.error(f"Failed to send email: {str(e)}")
-                flash('There was an issue sending the email. Please try again later.', 'danger')
-
+            flash('An email with password reset instructions has been sent.', 'success')
             return redirect(url_for('login'))
         else:
             flash('No account found with that email address.', 'danger')
 
     return render_template('forgot_password.html')
+
 
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
