@@ -373,7 +373,6 @@ def load_user(user_id):
 @app.route('/')
 def index():
     return render_template('index.html')
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -392,7 +391,9 @@ def login():
 
         if user and user.check_password(password):
             if not user.is_verified and user.role == 'student':
-                flash('Please verify your email before logging in.', 'warning')
+                flash('Please verify your email before logging in. Check your inbox for a verification link.', 'warning')
+                # Option to resend verification email
+                send_verification_email(user)
                 return redirect(url_for('login'))
 
             login_user(user)
@@ -474,8 +475,6 @@ def google_callback():
 
 
 # Modify the register route in app.py
-# Replace your current register function with this one:
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -494,16 +493,23 @@ def register():
             flash('Email already registered.', 'danger')
             return redirect(url_for('register'))
 
-        # Create the user and mark as verified immediately to bypass email verification
-        user = User(email=email, role='student', is_verified=True)
+        # Create the user but set is_verified to False
+        user = User(email=email, role='student', is_verified=False)
         user.set_password(password)
 
         try:
             db.session.add(user)
             db.session.commit()
 
-            # Success message
-            flash('Registration successful! You can now log in.', 'success')
+            # Send verification email
+            email_sent = send_verification_email(user)
+
+            if email_sent:
+                flash('Registration successful! Please check your email to verify your account.', 'success')
+            else:
+                flash('Registration successful, but we could not send a verification email. Please contact support.',
+                      'warning')
+
             return redirect(url_for('login'))
         except Exception as e:
             db.session.rollback()
@@ -512,6 +518,7 @@ def register():
             return redirect(url_for('register'))
 
     return render_template('register.html')
+
 @app.route('/verify-email/<token>')
 def verify_email(token):
     user = User.query.filter_by(verification_token=token).first()
