@@ -2086,15 +2086,23 @@ Best regards,
 The Emerging India Analytics Team
 '''
 
+            # Explicitly set a sender email address
+            sender_email = app.config.get('MAIL_DEFAULT_SENDER') or 'noreply@emergingindia.com'
+
             # Send password reset email
             msg = Message('Password Reset - Emerging India Analytics',
                           recipients=[user.email],
-                          sender=app.config['MAIL_DEFAULT_SENDER'])
+                          sender=sender_email)
             msg.body = text_content
             msg.html = html_content
-            mail.send(msg)
 
-            flash('An email with password reset instructions has been sent.', 'success')
+            try:
+                mail.send(msg)
+                flash('An email with password reset instructions has been sent.', 'success')
+            except Exception as e:
+                app.logger.error(f"Failed to send email: {str(e)}")
+                flash('There was an issue sending the email. Please try again later.', 'danger')
+
             return redirect(url_for('login'))
         else:
             flash('No account found with that email address.', 'danger')
