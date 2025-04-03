@@ -472,6 +472,10 @@ def google_callback():
         flash('An error occurred during Google authentication.', 'danger')
         return redirect(url_for('login'))
 
+
+# Modify the register route in app.py
+# Replace your current register function with this one:
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -490,19 +494,24 @@ def register():
             flash('Email already registered.', 'danger')
             return redirect(url_for('register'))
 
-        user = User(email=email, role='student')
+        # Create the user and mark as verified immediately to bypass email verification
+        user = User(email=email, role='student', is_verified=True)
         user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
 
-        # Send verification email
-        send_verification_email(user)
+        try:
+            db.session.add(user)
+            db.session.commit()
 
-        flash('Registration successful. Please check your email to verify your account.', 'success')
-        return redirect(url_for('login'))
+            # Success message
+            flash('Registration successful! You can now log in.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error during registration: {str(e)}")
+            flash('An error occurred during registration. Please try again.', 'danger')
+            return redirect(url_for('register'))
 
     return render_template('register.html')
-
 @app.route('/verify-email/<token>')
 def verify_email(token):
     user = User.query.filter_by(verification_token=token).first()
