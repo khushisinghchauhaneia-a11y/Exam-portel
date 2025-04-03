@@ -31,14 +31,16 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
 
 
-# Email configuration
-app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'sampleemailidmindsparc@gmail.com')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'njoe vdav ltdf cruq')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'sampleemailidmindsparc@gmail.com')
 
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = 'sampleemailidmindsparc@gmail.com'
+app.config['MAIL_PASSWORD'] = 'njoe vdav ltdf cruq'  # Replace with your actual App Password
+app.config['MAIL_DEFAULT_SENDER'] = 'sampleemailidmindsparc@gmail.com'
+app.config['MAIL_MAX_EMAILS'] = None
+app.config['MAIL_DEBUG'] = True  # Set to False in production
 
 
 # Update the database URI if needed
@@ -211,18 +213,36 @@ def send_verification_email(user):
 
     verification_url = url_for('verify_email', token=token, _external=True)
 
-    # Hardcode the sender directly in the function
-    sender_email = 'sampleemailidmindsparc@gmail.com'
-
+    # Create message with explicit sender
     msg = Message(
-        subject='Email Verification',
-        recipients=[user.email],
-        body=f'Please click the link to verify your email: {verification_url}',
-        sender=sender_email  # Explicitly set sender
+        subject='MindSparc Exam Portal - Verify Your Email',
+        sender=app.config['MAIL_DEFAULT_SENDER'],
+        recipients=[user.email]
     )
 
-    mail.send(msg)
+    # Set message body
+    msg.body = f'''Hello,
 
+Thank you for registering with MindSparc Exam Portal. Please click the link below to verify your email address:
+
+{verification_url}
+
+If you did not register for an account, please ignore this email.
+
+Regards,
+MindSparc Team
+'''
+
+    # Send the email
+    try:
+        mail.send(msg)
+        print(f"Email verification sent successfully to {user.email}")
+        return True
+    except Exception as e:
+        print(f"Error sending verification email: {str(e)}")
+        # Still allow registration to complete
+        flash('Registration successful, but email verification could not be sent. Please contact support.', 'warning')
+        return False
 
 
 def end_exam_timer(exam_id):
