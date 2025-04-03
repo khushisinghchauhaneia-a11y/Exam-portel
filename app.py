@@ -37,11 +37,6 @@ app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'sampleemailidmindsparc
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'tfducgfuhpuxwrsc')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'sampleemailidmindsparc@gmail.com')
 
-# Initialize mail after setting all configs
-mail = Mail(app)
-
-
-
 
 # Update the database URI if needed
 database_url = os.getenv('SQLALCHEMY_DATABASE_URI')
@@ -207,17 +202,22 @@ def validate_email(email):
 
 
 def send_verification_email(user):
-    token = str(uuid.uuid4())
-    user.verification_token = token
-    db.session.commit()
+    try:
+        token = str(uuid.uuid4())
+        user.verification_token = token
+        db.session.commit()
 
-    verification_url = url_for('verify_email', token=token, _external=True)
-    msg = Message('Email Verification',
-                  recipients=[user.email],
-                  sender=app.config['MAIL_DEFAULT_SENDER'])  # Explicitly set the sender
-    msg.body = f'Please click the link to verify your email: {verification_url}'
-    mail.send(msg)
-
+        verification_url = url_for('verify_email', token=token, _external=True)
+        msg = Message('Email Verification',
+                    recipients=[user.email],
+                    sender=app.config['MAIL_DEFAULT_SENDER'])
+        msg.body = f'Please click the link to verify your email: {verification_url}'
+        mail.send(msg)
+        print(f"Verification email sent successfully to {user.email}")
+        return True
+    except Exception as e:
+        print(f"Error sending verification email: {str(e)}")
+        return False
 def end_exam_timer(exam_id):
     with app.app_context():
         exam = Exam.query.get(exam_id)
