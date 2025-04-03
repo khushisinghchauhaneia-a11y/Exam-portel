@@ -213,15 +213,9 @@ def send_verification_email(user):
 
     verification_url = url_for('verify_email', token=token, _external=True)
 
-    # Create message with explicit sender
-    msg = Message(
-        subject='MindSparc Exam Portal - Verify Your Email',
-        sender=app.config['MAIL_DEFAULT_SENDER'],
-        recipients=[user.email]
-    )
+    email_content = f'''Subject: MindSparc Exam Portal - Verify Your Email
 
-    # Set message body
-    msg.body = f'''Hello,
+Hello,
 
 Thank you for registering with MindSparc Exam Portal. Please click the link below to verify your email address:
 
@@ -233,9 +227,38 @@ Regards,
 MindSparc Team
 '''
 
-    # Send the email
     try:
-        mail.send(msg)
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+
+        # Create message
+        message = MIMEMultipart()
+        message['From'] = 'sampleemailidmindsparc@gmail.com'
+        message['To'] = user.email
+        message['Subject'] = 'MindSparc Exam Portal - Verify Your Email'
+
+        # Attach the body
+        message.attach(MIMEText(f'''Hello,
+
+Thank you for registering with MindSparc Exam Portal. Please click the link below to verify your email address:
+
+{verification_url}
+
+If you did not register for an account, please ignore this email.
+
+Regards,
+MindSparc Team''', 'plain'))
+
+        # Connect to Gmail
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()  # Enable secure connection
+        server.login('sampleemailidmindsparc@gmail.com', 'your_app_password_here')
+
+        # Send email
+        server.sendmail('sampleemailidmindsparc@gmail.com', user.email, message.as_string())
+        server.quit()
+
         print(f"Email verification sent successfully to {user.email}")
         return True
     except Exception as e:
@@ -243,7 +266,6 @@ MindSparc Team
         # Still allow registration to complete
         flash('Registration successful, but email verification could not be sent. Please contact support.', 'warning')
         return False
-
 
 def end_exam_timer(exam_id):
     with app.app_context():
