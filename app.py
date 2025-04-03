@@ -439,9 +439,10 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user and user.check_password(password):
+            # Auto-verify user if they haven't been verified yet
             if not user.is_verified and user.role == 'student':
-                flash('Please verify your email before logging in.', 'warning')
-                return redirect(url_for('login'))
+                user.is_verified = True
+                db.session.commit()
 
             login_user(user)
             next_page = request.args.get('next')
@@ -454,7 +455,6 @@ def login():
             flash('Invalid email or password.', 'danger')
 
     return render_template('login.html')
-
 @app.route('/google-auth')
 def google_auth():
     # Redirect to Google's OAuth 2.0 server
@@ -537,18 +537,22 @@ def register():
             flash('Email already registered.', 'danger')
             return redirect(url_for('register'))
 
-        user = User(email=email, role='student')
+        # Create new user with is_verified set to True directly
+        user = User(email=email, role='student', is_verified=True)
         user.set_password(password)
+
+        # Still generate a verification token to maintain database consistency
+        # but we won't use it or send an email
+        user.verification_token = str(uuid.uuid4())
+
         db.session.add(user)
         db.session.commit()
 
-        # Send verification email
-        send_verification_email(user)
-
-        flash('Registration successful. Please check your email to verify your account.', 'success')
+        flash('Registration successful! You can now login.', 'success')
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
 
 @app.route('/verify-email/<token>')
 def verify_email(token):
