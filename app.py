@@ -26,7 +26,13 @@ load_dotenv()
 app = Flask(__name__)
 # Load configuration from environment variables
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///exam.db')
+
+# Update the database URI if needed
+database_url = os.getenv('SQLALCHEMY_DATABASE_URI')
+if database_url and database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://')
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///exam.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 oauth = OAuth(app)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
