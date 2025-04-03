@@ -30,12 +30,17 @@ app = Flask(__name__)
 # Load configuration from environment variables
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
 
-app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'sampleemailidmindsparc@gmail.com')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'tfducgfuhpuxwrsc')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'sampleemailidmindsparc@gmail.com')
+
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'sampleemailidmindsparc@gmail.com'
+# Replace with your Google App Password (NOT your regular Gmail password)
+app.config['MAIL_PASSWORD'] = 'tfducgfuhpuxwrsc'  # Format the 16-character app password like this
+app.config['MAIL_DEFAULT_SENDER'] = 'sampleemailidmindsparc@gmail.com'
+
+
 
 
 # Update the database URI if needed
