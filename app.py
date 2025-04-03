@@ -208,10 +208,14 @@ def send_verification_email(user):
         db.session.commit()
 
         verification_url = url_for('verify_email', token=token, _external=True)
-        msg = Message('Email Verification',
-                    recipients=[user.email],
-                    sender=app.config['MAIL_DEFAULT_SENDER'])
-        msg.body = f'Please click the link to verify your email: {verification_url}'
+
+        msg = Message(
+            subject='Email Verification',
+            recipients=[user.email],
+            sender='sampleemailidmindsparc@gmail.com',  # Explicitly set sender here
+            body=f'Please click the link to verify your email: {verification_url}'
+        )
+
         mail.send(msg)
         print(f"Verification email sent successfully to {user.email}")
         return True
