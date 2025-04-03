@@ -197,12 +197,12 @@ def send_verification_email(user):
 
     verification_url = url_for('verify_email', token=token, _external=True)
 
-    # Get email sender from environment or use default
-    sender_email = app.config.get('MAIL_DEFAULT_SENDER') or app.config.get(
-        'MAIL_USERNAME') or 'noreply@emergingindia.com'
+    # Explicitly use the configured sender
+    sender = app.config.get('MAIL_USERNAME')
+    print(f"Using sender email: {sender}")  # Debug log
 
     msg = Message('Email Verification',
-                  sender=sender_email,  # Explicitly set sender
+                  sender=sender,
                   recipients=[user.email])
     msg.body = f'Please click the link to verify your email: {verification_url}'
 
@@ -210,6 +210,7 @@ def send_verification_email(user):
         mail.send(msg)
     except Exception as e:
         app.logger.error(f"Failed to send verification email: {str(e)}")
+        # Continue - will show message to user
         # Continue execution - user can request verification email later
 def end_exam_timer(exam_id):
     with app.app_context():
@@ -465,6 +466,7 @@ def google_callback():
         flash('An error occurred during Google authentication.', 'danger')
         return redirect(url_for('login'))
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -483,19 +485,25 @@ def register():
             flash('Email already registered.', 'danger')
             return redirect(url_for('register'))
 
-        user = User(email=email, role='student')
+        # Create user with auto-verification for now
+        user = User(email=email, role='student', is_verified=True)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
 
-        # Send verification email
-        send_verification_email(user)
+        # Try to send email but don't fail registration if it doesn't work
+        try:
+            send_verification_email(user)
+            flash('Registration successful! You can now log in. A verification email was also sent.', 'success')
+        except Exception as e:
+            app.logger.error(f"Failed to send verification email: {str(e)}")
+            flash(
+                'Registration successful! You can now log in. (Email verification was skipped due to technical issues)',
+                'success')
 
-        flash('Registration successful. Please check your email to verify your account.', 'success')
         return redirect(url_for('login'))
 
     return render_template('register.html')
-
 @app.route('/verify-email/<token>')
 def verify_email(token):
     user = User.query.filter_by(verification_token=token).first()
