@@ -203,18 +203,25 @@ def validate_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
+
 def send_verification_email(user):
     token = str(uuid.uuid4())
     user.verification_token = token
     db.session.commit()
 
     verification_url = url_for('verify_email', token=token, _external=True)
-    msg = Message('Email Verification',
-                  recipients=[user.email],
-                  sender=app.config['MAIL_DEFAULT_SENDER'])  # Explicitly set sender
-    msg.body = f'Please click the link to verify your email: {verification_url}'
-    mail.send(msg)
 
+    # Hardcode the sender directly in the function
+    sender_email = 'sampleemailidmindsparc@gmail.com'
+
+    msg = Message(
+        subject='Email Verification',
+        recipients=[user.email],
+        body=f'Please click the link to verify your email: {verification_url}',
+        sender=sender_email  # Explicitly set sender
+    )
+
+    mail.send(msg)
 
 
 
