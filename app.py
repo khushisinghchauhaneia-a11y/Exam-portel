@@ -205,28 +205,18 @@ def validate_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
-
 def send_verification_email(user):
-    try:
-        token = str(uuid.uuid4())
-        user.verification_token = token
-        db.session.commit()
+    token = str(uuid.uuid4())
+    user.verification_token = token
+    db.session.commit()
 
-        verification_url = url_for('verify_email', token=token, _external=True)
+    verification_url = url_for('verify_email', token=token, _external=True)
+    msg = Message('Email Verification', recipients=[user.email])
+    msg.body = f'Please click the link to verify your email: {verification_url}'
+    mail.send(msg)
 
-        msg = Message(
-            subject='Email Verification',
-            recipients=[user.email],
-            sender='sampleemailidmindsparc@gmail.com',  # Explicitly set sender here
-            body=f'Please click the link to verify your email: {verification_url}'
-        )
 
-        mail.send(msg)
-        print(f"Verification email sent successfully to {user.email}")
-        return True
-    except Exception as e:
-        print(f"Error sending verification email: {str(e)}")
-        return False
+
 def end_exam_timer(exam_id):
     with app.app_context():
         exam = Exam.query.get(exam_id)
@@ -382,12 +372,12 @@ def load_user(user_id):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        if current_user.role == 'super_admin':
-            return redirect(url_for('super_admin_dashboard'))
-        elif current_user.role == 'admin':
+        if current_user.role == 'admin':
             return redirect(url_for('admin_dashboard'))
         else:
             return redirect(url_for('student_dashboard'))
@@ -400,17 +390,13 @@ def login():
 
         if user and user.check_password(password):
             if not user.is_verified and user.role == 'student':
-                flash('Please verify your email before logging in. Check your inbox for a verification link.', 'warning')
-                # Option to resend verification email
-                send_verification_email(user)
+                flash('Please verify your email before logging in.', 'warning')
                 return redirect(url_for('login'))
 
             login_user(user)
             next_page = request.args.get('next')
 
-            if user.role == 'super_admin':
-                return redirect(next_page or url_for('super_admin_dashboard'))
-            elif user.role == 'admin':
+            if user.role == 'admin':
                 return redirect(next_page or url_for('admin_dashboard'))
             else:
                 return redirect(next_page or url_for('student_dashboard'))
@@ -483,7 +469,6 @@ def google_callback():
         return redirect(url_for('login'))
 
 
-# Modify the register route in app.py
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -502,29 +487,16 @@ def register():
             flash('Email already registered.', 'danger')
             return redirect(url_for('register'))
 
-        # Create the user but set is_verified to False
-        user = User(email=email, role='student', is_verified=False)
+        user = User(email=email, role='student')
         user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
 
-        try:
-            db.session.add(user)
-            db.session.commit()
+        # Send verification email
+        send_verification_email(user)
 
-            # Send verification email
-            email_sent = send_verification_email(user)
-
-            if email_sent:
-                flash('Registration successful! Please check your email to verify your account.', 'success')
-            else:
-                flash('Registration successful, but we could not send a verification email. Please contact support.',
-                      'warning')
-
-            return redirect(url_for('login'))
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error during registration: {str(e)}")
-            flash('An error occurred during registration. Please try again.', 'danger')
-            return redirect(url_for('register'))
+        flash('Registration successful. Please check your email to verify your account.', 'success')
+        return redirect(url_for('login'))
 
     return render_template('register.html')
 
