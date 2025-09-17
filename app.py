@@ -12,7 +12,8 @@ import secrets
 import pandas as pd
 import io
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, Markup
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
+from markupsafe import Markup
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_mail import Mail, Message
 from flask_sqlalchemy import SQLAlchemy
