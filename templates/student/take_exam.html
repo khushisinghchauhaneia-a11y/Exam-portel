@@ -1038,6 +1038,366 @@ document.addEventListener('fullscreenchange', function() {
         showWarningModal();
     }
 });
+
+
+// Add this enhanced JavaScript to your existing script section
+
+// Enhanced fullscreen control variables
+let fullscreenForced = false;
+let fullscreenCheckInterval;
+let isExamActive = true;
+
+/**
+ * Force fullscreen mode with multiple attempts
+ */
+function forceFullscreen() {
+    if (!document.fullscreenElement &&
+        !document.webkitFullscreenElement &&
+        !document.mozFullScreenElement &&
+        !document.msFullscreenElement) {
+
+        const docElm = document.documentElement;
+
+        if (docElm.requestFullscreen) {
+            docElm.requestFullscreen();
+        } else if (docElm.webkitRequestFullscreen) {
+            docElm.webkitRequestFullscreen();
+        } else if (docElm.mozRequestFullScreen) {
+            docElm.mozRequestFullScreen();
+        } else if (docElm.msRequestFullscreen) {
+            docElm.msRequestFullscreen();
+        }
+    }
+}
+
+/**
+ * Continuously monitor and enforce fullscreen
+ */
+function enforceFullscreen() {
+    if (isExamActive && !document.fullscreenElement &&
+        !document.webkitFullscreenElement &&
+        !document.mozFullScreenElement &&
+        !document.msFullscreenElement) {
+
+        showWarningModal();
+
+        // Force back to fullscreen after a short delay
+        setTimeout(() => {
+            forceFullscreen();
+        }, 100);
+    }
+}
+
+/**
+ * Block all exit fullscreen attempts
+ */
+function blockExitFullscreen(e) {
+    if (isExamActive) {
+        e.preventDefault();
+        e.stopPropagation();
+        showWarningModal();
+
+        // Re-enter fullscreen immediately
+        setTimeout(() => {
+            forceFullscreen();
+        }, 50);
+
+        return false;
+    }
+}
+
+/**
+ * Enhanced key blocking including minimize and fullscreen exit keys
+ */
+function blockDangerousKeys(e) {
+    const blockedKeys = [
+        'F11', // Fullscreen toggle
+        'F12', // Developer tools
+        'Escape', // Exit fullscreen
+    ];
+
+    const blockedCombinations = [
+        // Developer tools
+        { ctrl: true, shift: true, key: 'I' },
+        { ctrl: true, shift: true, key: 'J' },
+        { ctrl: true, shift: true, key: 'C' },
+        { ctrl: true, key: 'U' },
+
+        // Minimize window
+        { meta: true, key: 'M' }, // Mac minimize
+        { alt: true, key: 'Space' }, // Windows system menu
+        { alt: true, key: 'F4' }, // Alt+F4
+        { ctrl: true, shift: true, key: 'Q' }, // Quit application
+
+        // Task switching
+        { alt: true, key: 'Tab' },
+        { ctrl: true, key: 'Tab' },
+        { meta: true, key: 'Tab' }, // Mac
+        { ctrl: true, shift: true, key: 'Tab' },
+
+        // Window management
+        { meta: true, key: 'H' }, // Mac hide
+        { ctrl: true, key: 'M' }, // Minimize
+        { meta: true, key: '`' }, // Mac app switching
+    ];
+
+    // Check single keys
+    if (blockedKeys.includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        showWarningModal();
+        return false;
+    }
+
+    // Check key combinations
+    for (let combo of blockedCombinations) {
+        if (
+            (combo.ctrl && e.ctrlKey) ||
+            (combo.shift && e.shiftKey) ||
+            (combo.alt && e.altKey) ||
+            (combo.meta && e.metaKey)
+        ) {
+            if (combo.key === e.key) {
+                e.preventDefault();
+                e.stopPropagation();
+                showWarningModal();
+                return false;
+            }
+        }
+    }
+}
+
+/**
+ * Detect window blur (losing focus)
+ */
+function handleWindowBlur() {
+    if (isExamActive) {
+        showWarningModal();
+
+        // Try to regain focus
+        setTimeout(() => {
+            window.focus();
+            forceFullscreen();
+        }, 100);
+    }
+}
+
+/**
+ * Detect window resize (potential minimize)
+ */
+function handleWindowResize() {
+    if (isExamActive) {
+        // Check if window is minimized or too small
+        if (window.innerHeight < 400 || window.innerWidth < 400) {
+            showWarningModal();
+
+            setTimeout(() => {
+                forceFullscreen();
+            }, 100);
+        }
+    }
+}
+
+/**
+ * Enhanced warning modal with stronger enforcement
+ */
+function showEnhancedWarningModal() {
+    warningCount++;
+    document.getElementById('warningCount').textContent = warningCount;
+
+    const modal = document.getElementById('warningModal');
+    modal.style.display = 'flex';
+
+    // Force focus on the modal
+    modal.focus();
+
+    // Prevent clicking outside the modal
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    };
+
+    if (warningCount >= MAX_WARNINGS) {
+        // Auto-submit after max warnings
+        setTimeout(function() {
+            isExamActive = false;
+            alert("Maximum violations reached. Exam will be submitted automatically.");
+            document.querySelector('button[name="submit_exam"]').click();
+        }, 3000);
+    }
+}
+
+/**
+ * Initialize enhanced fullscreen protection
+ */
+function initializeFullscreenProtection() {
+    // Force initial fullscreen
+    forceFullscreen();
+
+    // Set up continuous monitoring
+    fullscreenCheckInterval = setInterval(enforceFullscreen, 500);
+
+    // Enhanced event listeners
+    document.addEventListener('keydown', blockDangerousKeys, true);
+    document.addEventListener('keyup', blockDangerousKeys, true);
+
+    // Fullscreen change detection
+    document.addEventListener('fullscreenchange', enforceFullscreen);
+    document.addEventListener('webkitfullscreenchange', enforceFullscreen);
+    document.addEventListener('mozfullscreenchange', enforceFullscreen);
+    document.addEventListener('MSFullscreenChange', enforceFullscreen);
+
+    // Window focus and blur detection
+    window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', function() {
+        if (isExamActive) {
+            forceFullscreen();
+        }
+    });
+
+    // Window resize detection
+    window.addEventListener('resize', handleWindowResize);
+
+    // Page visibility changes
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden' && isExamActive) {
+            showEnhancedWarningModal();
+        } else if (document.visibilityState === 'visible' && isExamActive) {
+            forceFullscreen();
+        }
+    });
+
+    // Prevent context menu
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        showWarningModal();
+        return false;
+    });
+
+    // Block text selection
+    document.addEventListener('selectstart', function(e) {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // Block drag and drop
+    document.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    // Detect mouse leaving window
+    document.addEventListener('mouseleave', function() {
+        if (isExamActive) {
+            showWarningModal();
+        }
+    });
+}
+
+/**
+ * Clean up when exam is submitted
+ */
+function cleanupFullscreenProtection() {
+    isExamActive = false;
+
+    if (fullscreenCheckInterval) {
+        clearInterval(fullscreenCheckInterval);
+    }
+
+    // Remove event listeners if needed
+    document.removeEventListener('keydown', blockDangerousKeys, true);
+    document.removeEventListener('keyup', blockDangerousKeys, true);
+    window.removeEventListener('blur', handleWindowBlur);
+    window.removeEventListener('resize', handleWindowResize);
+}
+
+// Replace the existing DOMContentLoaded event listener with this enhanced version
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize enhanced fullscreen protection
+    initializeFullscreenProtection();
+
+    // Initialize timer
+    document.getElementById('timer').textContent = formatTime(examDuration);
+    timerInterval = setInterval(updateTimer, 1000);
+
+    // Initialize answered questions count
+    updateAnsweredCount();
+
+    // Highlight the first question's button as current
+    document.getElementById('questionBtn1').classList.add('current');
+
+    // Update navigation buttons for the first question
+    updateNavigationButtons(1, document.querySelectorAll('.question-container').length);
+
+    // Detect any answer changes
+    const radioButtons = document.querySelectorAll('input[type="radio"]');
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const questionId = this.name.replace('answer_', '');
+            const questionNumber = Array.from(document.querySelectorAll('.question-container')).findIndex(q => q.querySelector(`input[name="answer_${questionId}"]`)) + 1;
+            updateAnswerStatus(questionId, questionNumber);
+        });
+    });
+
+    // Prevent form submission when pressing Enter
+    document.getElementById('examForm').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
+    });
+
+    // Override the confirm submit function to clean up
+    window.originalConfirmSubmit = confirmSubmit;
+    window.confirmSubmit = function() {
+        const result = originalConfirmSubmit();
+        if (result) {
+            cleanupFullscreenProtection();
+        }
+        return result;
+    };
+});
+
+// Additional protection against common escape methods
+window.addEventListener('beforeunload', function(e) {
+    if (isExamActive) {
+        const message = 'Are you sure you want to leave the exam? Your progress may be lost.';
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
+    }
+});
+
+// Block print functionality
+window.addEventListener('beforeprint', function(e) {
+    e.preventDefault();
+    showWarningModal();
+    return false;
+});
+
+// Override window.close
+window.close = function() {
+    if (isExamActive) {
+        showWarningModal();
+        return false;
+    }
+};
+
+// Disable browser back/forward buttons
+window.addEventListener('popstate', function(e) {
+    if (isExamActive) {
+        showWarningModal();
+        history.pushState(null, null, location.href);
+    }
+});
+
+// Push initial state to prevent back button
+history.pushState(null, null, location.href);
+
+
 </script>
 </body>
 </html>
