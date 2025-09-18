@@ -903,6 +903,7 @@ function startExam() {
 function initializeExam() {
     // Add body class for exam mode
     document.body.classList.add('exam-mode');
+    window.warningModalVisible = false;
 
     // Force initial fullscreen immediately
     forceFullscreen();
@@ -1221,13 +1222,14 @@ function blockAllDangerousKeys(e) {
  * Shows warning modal with enhanced enforcement
  */
 function showWarningModal() {
-    if (!isExamActive || !examStarted) return;
+    if (!isExamActive || !examStarted || window.warningModalVisible) return;
 
     warningCount++;
     document.getElementById('warningCount').textContent = warningCount;
 
     const modal = document.getElementById('warningModal');
     modal.style.display = 'flex';
+    window.warningModalVisible = true;
 
     // Force focus on modal
     setTimeout(() => {
@@ -1251,6 +1253,7 @@ function showWarningModal() {
  */
 function closeWarningModal() {
     document.getElementById('warningModal').style.display = 'none';
+    window.warningModalVisible = false;
 
     // Aggressive fullscreen re-enforcement
     setTimeout(forceFullscreen, 100);
