@@ -1489,28 +1489,34 @@ def take_exam(exam_id):
         exam_id=exam_id
     ).first()
 
-    if existing_exam and existing_exam.is_completed:
-        flash('You have already completed this exam.', 'info')
-        return redirect(url_for('student_dashboard'))
-
-    # If student is starting the exam
-    if not existing_exam:
-        # Generate randomized question order if enabled
+    if existing_exam:
+        if existing_exam.is_completed:
+            flash('You have already completed this exam.', 'info')
+            return redirect(url_for('student_dashboard'))
+        else:
+            # If exam was started but not completed, allow continuation
+            student_exam = existing_exam
+    else:
+        # Starting new exam
         question_order = None
         if exam.randomize_questions:
             question_order = get_question_order(exam_id)
             question_order = json.dumps(question_order)
 
+        # Check if exam has valid start time
+        if not exam.start_time:
+            exam.start_time = datetime.utcnow()
+            db.session.commit()
+
         student_exam = StudentExam(
             student_id=current_user.id,
             exam_id=exam_id,
             start_time=datetime.utcnow(),
-            question_order=question_order
+            question_order=question_order,
+            is_completed=False
         )
         db.session.add(student_exam)
         db.session.commit()
-    else:
-        student_exam = existing_exam
 
     # Calculate remaining time
     remaining_seconds = 0

@@ -40,19 +40,35 @@ body.exam-mode {
     overflow: hidden !important;
 }
 
-/* Prevent text selection except for inputs */
+/* Prevent text selection and copying */
 * {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    -webkit-touch-callout: none;
 }
 
-input, textarea, .form-check-label {
+/* Allow text selection only for specific form inputs */
+input[type="text"], 
+input[type="password"], 
+input[type="email"],
+input[type="number"],
+textarea {
     -webkit-user-select: text;
     -moz-user-select: text;
     -ms-user-select: text;
     user-select: text;
+    -webkit-touch-callout: default;
+}
+
+/* Ensure radio buttons labels remain unselectable */
+.form-check-label {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
 }
 
 /* Hide scrollbars in fullscreen */
@@ -734,6 +750,7 @@ input, textarea, .form-check-label {
                             <i class="fas fa-circle"></i>
                         {% endif %}
                     </span>
+                    <span class="ms-2" id="reviewIndicator{{ loop.index }}" style="display:none;color:#ffc107;"><i class="fas fa-flag"></i></span>
                 </button>
                 {% endfor %}
             </div>
@@ -779,6 +796,9 @@ input, textarea, .form-check-label {
                                     <i class="fas fa-times me-1"></i> Unanswered
                                 {% endif %}
                             </span>
+                            <button type="button" class="btn btn-warning btn-sm ms-3" onclick="toggleReview({{ question.id }}, {{ loop.index }})" id="reviewBtn{{ loop.index }}">
+                                <i class="fas fa-flag me-1"></i> Mark as Review
+                            </button>
                         </div>
 
                         <p class="question-text">{{ question.question_text }}</p>
@@ -851,10 +871,7 @@ input, textarea, .form-check-label {
                     </div>
 
                     <div class="navigation-buttons">
-                        <button type="submit" name="save_progress" class="btn btn-secondary">
-                            <i class="fas fa-save me-2"></i> Save Progress
-                        </button>
-                        <button type="submit" name="submit_exam" class="btn btn-primary" onclick="return confirmSubmit()">
+                        <button type="submit" name="submit_exam" class="btn btn-primary" onclick="return handleFinalSubmit()">
                             <i class="fas fa-paper-plane me-2"></i> Submit Exam
                         </button>
                     </div>
@@ -866,6 +883,20 @@ input, textarea, .form-check-label {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+// Mark as Review logic
+let reviewQuestions = {};
+
+function toggleReview(questionId, questionNumber) {
+    if (reviewQuestions[questionNumber]) {
+        reviewQuestions[questionNumber] = false;
+        document.getElementById(`reviewIndicator${questionNumber}`).style.display = 'none';
+        document.getElementById(`reviewBtn${questionNumber}`).innerHTML = '<i class="fas fa-flag me-1"></i> Mark as Review';
+    } else {
+        reviewQuestions[questionNumber] = true;
+        document.getElementById(`reviewIndicator${questionNumber}`).style.display = 'inline';
+        document.getElementById(`reviewBtn${questionNumber}`).innerHTML = '<i class="fas fa-flag me-1"></i> Unmark Review';
+    }
+}
 // Global constants and variables
 const MAX_WARNINGS = 3;
 let warningCount = 0;
@@ -885,6 +916,10 @@ let maxFullscreenAttempts = 5;
  * Start the exam after instructions
  */
 function startExam() {
+    // Clear any existing exam state
+    localStorage.removeItem('exam_{{ exam.id }}_submitted');
+    localStorage.removeItem('exam_{{ exam.id }}_in_progress');
+    
     document.getElementById('examInstructions').style.display = 'none';
     document.getElementById('mainNavbar').style.display = 'block';
     document.getElementById('timerContainer').style.display = 'flex';
@@ -907,6 +942,37 @@ function initializeExam() {
 
     // Force initial fullscreen immediately
     forceFullscreen();
+
+    // Initialize text selection and copy protection
+    document.addEventListener('selectstart', function(e) {
+        const allowedElements = ['input', 'textarea'];
+        const allowedTypes = ['text', 'password', 'email', 'number'];
+        
+        if (!allowedElements.includes(e.target.tagName.toLowerCase()) || 
+            (e.target.type && !allowedTypes.includes(e.target.type.toLowerCase()))) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // Prevent copy/cut/paste
+    document.addEventListener('copy', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
+    document.addEventListener('cut', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
+    document.addEventListener('paste', function(e) {
+        const allowedElements = ['input', 'textarea'];
+        if (!allowedElements.includes(e.target.tagName.toLowerCase())) {
+            e.preventDefault();
+            return false;
+        }
+    });
 
     // Initialize fullscreen protection with delay
     setTimeout(() => {
@@ -953,36 +1019,26 @@ function initializeExam() {
  * Force fullscreen with aggressive retry mechanism
  */
 function forceFullscreen() {
-    if (fullscreenAttempts >= maxFullscreenAttempts) {
-        // If too many attempts, auto-submit exam
-        if (isExamActive) {
-            showWarningModal();
-            setTimeout(() => {
-                isExamActive = false;
-                alert("Unable to maintain fullscreen mode. Exam will be submitted automatically.");
-                document.querySelector('button[name="submit_exam"]').click();
-            }, 2000);
-        }
-        return;
+    if (warningCount >= MAX_WARNINGS) {
+        return; // Don't try to force fullscreen if we've reached max warnings
     }
 
     if (!isInFullscreen()) {
-        fullscreenAttempts++;
         const docElm = document.documentElement;
 
-        if (docElm.requestFullscreen) {
-            docElm.requestFullscreen().catch(() => {
-                setTimeout(forceFullscreen, 1000);
-            });
-        } else if (docElm.webkitRequestFullscreen) {
-            docElm.webkitRequestFullscreen();
-        } else if (docElm.mozRequestFullScreen) {
-            docElm.mozRequestFullScreen();
-        } else if (docElm.msRequestFullscreen) {
-            docElm.msRequestFullscreen();
+        try {
+            if (docElm.requestFullscreen) {
+                docElm.requestFullscreen();
+            } else if (docElm.webkitRequestFullscreen) {
+                docElm.webkitRequestFullscreen();
+            } else if (docElm.mozRequestFullScreen) {
+                docElm.mozRequestFullScreen();
+            } else if (docElm.msRequestFullscreen) {
+                docElm.msRequestFullscreen();
+            }
+        } catch (error) {
+            console.error('Error requesting fullscreen:', error);
         }
-    } else {
-        fullscreenAttempts = 0; // Reset attempts when successfully in fullscreen
     }
 }
 
@@ -1000,26 +1056,31 @@ function isInFullscreen() {
  * Aggressive fullscreen monitoring and enforcement
  */
 function enforceFullscreen() {
-    if (!isExamActive || !fullscreenInitialized || !examStarted) return;
+    if (!fullscreenInitialized || !examStarted) return;
 
     if (!isInFullscreen()) {
-        showWarningModal();
+        if (!window.warningModalVisible) {
+            showWarningModal();
+        }
 
-        // Immediate fullscreen attempt
-        forceFullscreen();
+        // Only attempt fullscreen if we haven't reached max warnings
+        if (warningCount < MAX_WARNINGS) {
+            // Immediate fullscreen attempt
+            forceFullscreen();
 
-        // Additional attempts with delays
-        setTimeout(() => {
-            if (isExamActive && !isInFullscreen()) {
-                forceFullscreen();
-            }
-        }, 500);
+            // Additional attempts with delays
+            setTimeout(() => {
+                if (!isInFullscreen()) {
+                    forceFullscreen();
+                }
+            }, 500);
 
-        setTimeout(() => {
-            if (isExamActive && !isInFullscreen()) {
-                forceFullscreen();
-            }
-        }, 1500);
+            setTimeout(() => {
+                if (!isInFullscreen()) {
+                    forceFullscreen();
+                }
+            }, 1500);
+        }
     }
 }
 
@@ -1231,6 +1292,11 @@ function showWarningModal() {
     modal.style.display = 'flex';
     window.warningModalVisible = true;
 
+    // Pause timer while warning is shown
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+
     // Force focus on modal
     setTimeout(() => {
         const returnBtn = modal.querySelector('.btn');
@@ -1255,10 +1321,28 @@ function closeWarningModal() {
     document.getElementById('warningModal').style.display = 'none';
     window.warningModalVisible = false;
 
-    // Aggressive fullscreen re-enforcement
-    setTimeout(forceFullscreen, 100);
-    setTimeout(forceFullscreen, 500);
-    setTimeout(forceFullscreen, 1000);
+    // Only continue if we haven't reached max warnings
+    if (warningCount < MAX_WARNINGS) {
+        isExamActive = true;
+        examStarted = true;
+        
+        // Resume timer
+        if (!timerInterval) {
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Immediate fullscreen attempt
+        forceFullscreen();
+        
+        // Additional fullscreen attempts with delays
+        setTimeout(() => {
+            if (!isInFullscreen()) forceFullscreen();
+        }, 500);
+        
+        setTimeout(() => {
+            if (!isInFullscreen()) forceFullscreen();
+        }, 1500);
+    }
 }
 
 /**
@@ -1371,14 +1455,35 @@ function setupSubmitButtons() {
     });
 }
 
-function confirmSubmit() {
+function handleFinalSubmit(isAutoSubmit = false) {
     const answeredQuestions = document.querySelectorAll('.question-btn.answered').length;
     const totalQuestions = document.querySelectorAll('.question-container').length;
 
-    if (answeredQuestions < totalQuestions) {
-        return confirm(`You have only answered ${answeredQuestions} out of ${totalQuestions} questions. Are you sure you want to submit your exam?`);
+    // For automatic submission due to time's up
+    if (isAutoSubmit) {
+        cleanupFullscreenProtection();
+        const form = document.getElementById('examForm');
+        form.action = form.action + '?final_submit=true&auto_submit=true';
+        form.submit();
+        return false; // Prevent default form submission
     }
-    return confirm("Are you sure you want to submit your exam? Once submitted, you cannot make changes.");
+
+    // For manual submission
+    if (answeredQuestions < totalQuestions) {
+        if (!confirm(`You have only answered ${answeredQuestions} out of ${totalQuestions} questions. Are you sure you want to submit your exam?`)) {
+            return false;
+        }
+    } else if (!confirm("Are you sure you want to submit your exam? Once submitted, you cannot make changes.")) {
+        return false;
+    }
+
+    // Clean up and submit
+    cleanupFullscreenProtection();
+    
+    // Redirect to dashboard after submission
+    const form = document.getElementById('examForm');
+    form.action = form.action + '?final_submit=true';
+    return true;
 }
 
 function formatTime(seconds) {
@@ -1390,18 +1495,31 @@ function formatTime(seconds) {
 function updateTimer() {
     if (timeRemaining <= 0) {
         clearInterval(timerInterval);
-        isExamActive = false;
-        cleanupFullscreenProtection();
-        alert("Time's up! Your exam will be submitted automatically.");
-        document.querySelector('button[name="submit_exam"]').click();
+        
+        // Show a warning dialog with a countdown before submission
+        if (confirm("Time's up! Click OK to submit your exam or Cancel to review your answers for 2 more minutes.")) {
+            handleFinalSubmit(true); // true indicates it's an automatic submission
+        } else {
+            // Give 2 more minutes for review
+            timeRemaining = 120;
+            timerInterval = setInterval(updateTimer, 1000);
+            document.getElementById('timerContainer').classList.add('low-time');
+        }
         return;
     }
 
     timeRemaining--;
     document.getElementById('timer').textContent = formatTime(timeRemaining);
 
-    if (timeRemaining <= 300) {
+    // Show warning at 5 minutes remaining
+    if (timeRemaining === 300) {
+        alert("5 minutes remaining! Please start reviewing your answers.");
         document.getElementById('timerContainer').classList.add('low-time');
+    }
+    
+    // Show warning at 1 minute remaining
+    if (timeRemaining === 60) {
+        alert("1 minute remaining! Please prepare to submit your exam.");
     }
 }
 
